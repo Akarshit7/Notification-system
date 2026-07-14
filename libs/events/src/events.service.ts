@@ -1,9 +1,9 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { connect, Connection, Channel, ConsumeMessage } from 'amqplib';
+import { connect, ChannelModel, Channel } from 'amqplib';
 
 @Injectable()
 export class EventsService implements OnModuleInit, OnModuleDestroy {
-  private connection: Connection | null = null;
+  private connection: ChannelModel | null = null;
   private channel: Channel | null = null;
   private readonly logger = new Logger(EventsService.name);
 
