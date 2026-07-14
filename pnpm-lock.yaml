@@ -114,6 +114,24 @@ importers:
 
   apps/api-gateway: {}
 
+  apps/email-service: {}
+
+  apps/notification-service: {}
+
+  apps/push-service: {}
+
+  apps/scheduler-service: {}
+
+  apps/sms-service: {}
+
+  apps/template-service: {}
+
+  apps/user-preference-service: {}
+
+  apps/websocket-service: {}
+
+  apps/worker-service: {}
+
   libs/common: {}
 
   libs/config:

@@ -1,0 +1,10 @@
+{
+  "name": "sms-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "nest start sms-service",
+    "start:dev": "nest start sms-service --watch",
+    "start:prod": "node dist/apps/sms-service/main"
+  }
+}

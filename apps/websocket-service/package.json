@@ -1,0 +1,10 @@
+{
+  "name": "websocket-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "nest start websocket-service",
+    "start:dev": "nest start websocket-service --watch",
+    "start:prod": "node dist/apps/websocket-service/main"
+  }
+}

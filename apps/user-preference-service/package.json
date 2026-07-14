@@ -1,0 +1,10 @@
+{
+  "name": "user-preference-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "nest start user-preference-service",
+    "start:dev": "nest start user-preference-service --watch",
+    "start:prod": "node dist/apps/user-preference-service/main"
+  }
+}

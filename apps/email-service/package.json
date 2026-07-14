@@ -1,0 +1,10 @@
+{
+  "name": "email-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "nest start email-service",
+    "start:dev": "nest start email-service --watch",
+    "start:prod": "node dist/apps/email-service/main"
+  }
+}

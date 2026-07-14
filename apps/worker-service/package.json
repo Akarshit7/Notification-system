@@ -1,0 +1,10 @@
+{
+  "name": "worker-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "nest start worker-service",
+    "start:dev": "nest start worker-service --watch",
+    "start:prod": "node dist/apps/worker-service/main"
+  }
+}
