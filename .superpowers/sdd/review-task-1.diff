@@ -1,0 +1,4699 @@
+# Review package: root..da311acbbd42914e68dc1f95ee7d53319cebb749
+
+## Commits
+da311ac chore: initialize nestjs monorepo with pnpm workspaces
+
+## Files changed
+commit da311acbbd42914e68dc1f95ee7d53319cebb749
+Author: Akarshit Batra <akarshit.batra@geekyants.com>
+Date:   Tue Jul 14 15:24:20 2026 +0530
+
+    chore: initialize nestjs monorepo with pnpm workspaces
+
+ .gitignore                                         |   11 +
+ .superpowers/sdd/task-1-brief.md                   |  375 +++
+ apps/api-gateway/tsconfig.app.json                 |    9 +
+ apps/email-service/tsconfig.app.json               |    9 +
+ apps/notification-service/tsconfig.app.json        |    9 +
+ apps/push-service/tsconfig.app.json                |    9 +
+ apps/scheduler-service/tsconfig.app.json           |    9 +
+ apps/sms-service/tsconfig.app.json                 |    9 +
+ apps/template-service/tsconfig.app.json            |    9 +
+ apps/user-preference-service/tsconfig.app.json     |    9 +
+ apps/websocket-service/tsconfig.app.json           |    9 +
+ apps/worker-service/tsconfig.app.json              |    9 +
+ .../plans/2026-07-14-notification-platform-day1.md | 3366 ++++++++++++++++++++
+ ...2026-07-14-notification-platform-day1-design.md |  217 ++
+ libs/common/package.json                           |    6 +
+ libs/common/tsconfig.lib.json                      |    9 +
+ libs/config/package.json                           |    6 +
+ libs/config/tsconfig.lib.json                      |    9 +
+ libs/database/package.json                         |    6 +
+ libs/database/tsconfig.lib.json                    |    9 +
+ libs/dto/package.json                              |    6 +
+ libs/dto/tsconfig.lib.json                         |    9 +
+ libs/events/package.json                           |    6 +
+ libs/events/tsconfig.lib.json                      |    9 +
+ libs/logger/package.json                           |    6 +
+ libs/logger/tsconfig.lib.json                      |    9 +
+ libs/observability/package.json                    |    6 +
+ libs/observability/tsconfig.lib.json               |    9 +
+ libs/utils/package.json                            |    6 +
+ libs/utils/tsconfig.lib.json                       |    9 +
+ nest-cli.json                                      |  177 +
+ package.json                                       |   28 +
+ pnpm-workspace.yaml                                |    3 +
+ tsconfig.build.json                                |    4 +
+ tsconfig.json                                      |   42 +
+ 35 files changed, 4433 insertions(+)
+
+## Diff
+commit da311acbbd42914e68dc1f95ee7d53319cebb749
+Author: Akarshit Batra <akarshit.batra@geekyants.com>
+Date:   Tue Jul 14 15:24:20 2026 +0530
+
+    chore: initialize nestjs monorepo with pnpm workspaces
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..e017c89
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,11 @@
++node_modules/
++dist/
++coverage/
++.env
++.env.local
++.env.*.local
++*.log
++.DS_Store
++.turbo
++prisma/*.db
++prisma/*.db-journal
+diff --git a/.superpowers/sdd/task-1-brief.md b/.superpowers/sdd/task-1-brief.md
+new file mode 100644
+index 0000000..dc3c7a2
+--- /dev/null
++++ b/.superpowers/sdd/task-1-brief.md
+@@ -0,0 +1,375 @@
++### Task 1: Project Initialization
++
++**Files:**
++- Create: `package.json` (root)
++- Create: `pnpm-workspace.yaml`
++- Create: `.gitignore`
++- Create: `nest-cli.json`
++- Create: `tsconfig.json`
++- Create: `tsconfig.build.json`
++- Create: `apps/api-gateway/tsconfig.app.json`
++- Create: `libs/config/tsconfig.lib.json`
++- Create (shared template): `apps/placeholder-app/package.json` pattern
++- Create: `libs/config/package.json`
++
++**Interfaces:**
++- Consumes: nothing
++- Produces: Root monorepo structure with pnpm + NestJS monorepo mode
++
++- [ ] **Step 1: Create root package.json**
++
++```json
++{
++  "name": "notification-platform",
++  "version": "0.1.0",
++  "private": true,
++  "description": "Production-grade notification platform",
++  "scripts": {
++    "build": "nest build",
++    "format": "prettier --write \"**/*.ts\"",
++    "lint": "eslint \"{apps,libs}/**/*.ts\" --fix",
++    "test": "jest --passWithNoTests",
++    "test:watch": "jest --watch",
++    "test:cov": "jest --coverage",
++    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json",
++    "start:dev": "nest start --watch",
++    "start:api-gateway": "nest start api-gateway --watch",
++    "prisma:generate": "prisma generate",
++    "prisma:push": "prisma db push",
++    "prisma:studio": "prisma studio",
++    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
++    "docker:down": "docker compose -f docker/docker-compose.yml down",
++    "prepare": "husky"
++  },
++  "engines": {
++    "node": ">=24.0.0",
++    "pnpm": ">=11.0.0"
++  },
++  "packageManager": "pnpm@11.5.2"
++}
++```
++
++- [ ] **Step 2: Create pnpm-workspace.yaml**
++
++```yaml
++packages:
++  - 'apps/*'
++  - 'libs/*'
++```
++
++- [ ] **Step 3: Create .gitignore**
++
++```
++node_modules/
++dist/
++coverage/
++.env
++.env.local
++.env.*.local
++*.log
++.DS_Store
++.turbo
++prisma/*.db
++prisma/*.db-journal
++```
++
++- [ ] **Step 4: Create nest-cli.json**
++
++```json
++{
++  "$schema": "https://json.schemastore.org/nest-cli",
++  "collection": "@nestjs/schematics",
++  "sourceRoot": "apps/api-gateway/src",
++  "compilerOptions": {
++    "builder": "swc",
++    "typeCheck": true,
++    "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
++    "webpack": false
++  },
++  "monorepo": true,
++  "root": "apps/api-gateway",
++  "projects": {
++    "api-gateway": {
++      "type": "application",
++      "root": "apps/api-gateway",
++      "entryFile": "main",
++      "sourceRoot": "apps/api-gateway/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
++      }
++    },
++    "notification-service": {
++      "type": "application",
++      "root": "apps/notification-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/notification-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
++      }
++    },
++    "email-service": {
++      "type": "application",
++      "root": "apps/email-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/email-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/email-service/tsconfig.app.json"
++      }
++    },
++    "push-service": {
++      "type": "application",
++      "root": "apps/push-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/push-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/push-service/tsconfig.app.json"
++      }
++    },
++    "sms-service": {
++      "type": "application",
++      "root": "apps/sms-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/sms-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/sms-service/tsconfig.app.json"
++      }
++    },
++    "websocket-service": {
++      "type": "application",
++      "root": "apps/websocket-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/websocket-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/websocket-service/tsconfig.app.json"
++      }
++    },
++    "scheduler-service": {
++      "type": "application",
++      "root": "apps/scheduler-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/scheduler-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/scheduler-service/tsconfig.app.json"
++      }
++    },
++    "worker-service": {
++      "type": "application",
++      "root": "apps/worker-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/worker-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/worker-service/tsconfig.app.json"
++      }
++    },
++    "template-service": {
++      "type": "application",
++      "root": "apps/template-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/template-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/template-service/tsconfig.app.json"
++      }
++    },
++    "user-preference-service": {
++      "type": "application",
++      "root": "apps/user-preference-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/user-preference-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/user-preference-service/tsconfig.app.json"
++      }
++    },
++    "config": {
++      "type": "library",
++      "root": "libs/config",
++      "entryFile": "index",
++      "sourceRoot": "libs/config/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/config/tsconfig.lib.json"
++      }
++    },
++    "database": {
++      "type": "library",
++      "root": "libs/database",
++      "entryFile": "index",
++      "sourceRoot": "libs/database/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/database/tsconfig.lib.json"
++      }
++    },
++    "logger": {
++      "type": "library",
++      "root": "libs/logger",
++      "entryFile": "index",
++      "sourceRoot": "libs/logger/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/logger/tsconfig.lib.json"
++      }
++    },
++    "events": {
++      "type": "library",
++      "root": "libs/events",
++      "entryFile": "index",
++      "sourceRoot": "libs/events/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/events/tsconfig.lib.json"
++      }
++    },
++    "dto": {
++      "type": "library",
++      "root": "libs/dto",
++      "entryFile": "index",
++      "sourceRoot": "libs/dto/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/dto/tsconfig.lib.json"
++      }
++    },
++    "utils": {
++      "type": "library",
++      "root": "libs/utils",
++      "entryFile": "index",
++      "sourceRoot": "libs/utils/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/utils/tsconfig.lib.json"
++      }
++    },
++    "common": {
++      "type": "library",
++      "root": "libs/common",
++      "entryFile": "index",
++      "sourceRoot": "libs/common/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/common/tsconfig.lib.json"
++      }
++    },
++    "observability": {
++      "type": "library",
++      "root": "libs/observability",
++      "entryFile": "index",
++      "sourceRoot": "libs/observability/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/observability/tsconfig.lib.json"
++      }
++    }
++  }
++}
++```
++
++- [ ] **Step 5: Create root tsconfig.json**
++
++```json
++{
++  "compilerOptions": {
++    "module": "commonjs",
++    "declaration": true,
++    "removeComments": true,
++    "emitDecoratorMetadata": true,
++    "experimentalDecorators": true,
++    "allowSyntheticDefaultImports": true,
++    "target": "ES2022",
++    "sourceMap": true,
++    "outDir": "./dist",
++    "baseUrl": "./",
++    "incremental": true,
++    "skipLibCheck": true,
++    "strict": true,
++    "strictNullChecks": true,
++    "noImplicitAny": true,
++    "strictBindCallApply": true,
++    "forceConsistentCasingInFileNames": true,
++    "noFallthroughCasesInSwitch": true,
++    "esModuleInterop": true,
++    "resolveJsonModule": true,
++    "paths": {
++      "@app/config": ["libs/config/src"],
++      "@app/config/*": ["libs/config/src/*"],
++      "@app/database": ["libs/database/src"],
++      "@app/database/*": ["libs/database/src/*"],
++      "@app/logger": ["libs/logger/src"],
++      "@app/logger/*": ["libs/logger/src/*"],
++      "@app/events": ["libs/events/src"],
++      "@app/events/*": ["libs/events/src/*"],
++      "@app/dto": ["libs/dto/src"],
++      "@app/dto/*": ["libs/dto/src/*"],
++      "@app/utils": ["libs/utils/src"],
++      "@app/utils/*": ["libs/utils/src/*"],
++      "@app/common": ["libs/common/src"],
++      "@app/common/*": ["libs/common/src/*"],
++      "@app/observability": ["libs/observability/src"],
++      "@app/observability/*": ["libs/observability/src/*"]
++    }
++  }
++}
++```
++
++- [ ] **Step 6: Create tsconfig.build.json**
++
++```json
++{
++  "extends": "./tsconfig.json",
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "**/*test.ts"]
++}
++```
++
++- [ ] **Step 7: Create dirs and tsconfig.app.json for api-gateway**
++
++Run:
++```bash
++mkdir -p apps/api-gateway/src apps/api-gateway/test
++```
++
++Create `apps/api-gateway/tsconfig.app.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/api-gateway"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 8: Create lib workspace package.json template**
++
++Create `libs/config/package.json`:
++```json
++{
++  "name": "@app/config",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
++```
++
++- [ ] **Step 9: Create tsconfig.lib.json for each lib**
++
++Create `libs/config/tsconfig.lib.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/config"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 10: Verify structure**
++
++Run: `ls -la apps/ libs/`
++Expected: folder structure exists
++
++- [ ] **Step 11: Commit**
++
++```bash
++git init
++git add -A
++git commit -m "chore: initialize nestjs monorepo with pnpm workspaces"
++```
++
++---
++
+diff --git a/apps/api-gateway/tsconfig.app.json b/apps/api-gateway/tsconfig.app.json
+new file mode 100644
+index 0000000..616ae16
+--- /dev/null
++++ b/apps/api-gateway/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/api-gateway"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/email-service/tsconfig.app.json b/apps/email-service/tsconfig.app.json
+new file mode 100644
+index 0000000..388b1e3
+--- /dev/null
++++ b/apps/email-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/email-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/notification-service/tsconfig.app.json b/apps/notification-service/tsconfig.app.json
+new file mode 100644
+index 0000000..7508b74
+--- /dev/null
++++ b/apps/notification-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/notification-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/push-service/tsconfig.app.json b/apps/push-service/tsconfig.app.json
+new file mode 100644
+index 0000000..cb49734
+--- /dev/null
++++ b/apps/push-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/push-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/scheduler-service/tsconfig.app.json b/apps/scheduler-service/tsconfig.app.json
+new file mode 100644
+index 0000000..984561c
+--- /dev/null
++++ b/apps/scheduler-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/scheduler-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/sms-service/tsconfig.app.json b/apps/sms-service/tsconfig.app.json
+new file mode 100644
+index 0000000..ae036bf
+--- /dev/null
++++ b/apps/sms-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/sms-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/template-service/tsconfig.app.json b/apps/template-service/tsconfig.app.json
+new file mode 100644
+index 0000000..5d6d2d1
+--- /dev/null
++++ b/apps/template-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/template-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/user-preference-service/tsconfig.app.json b/apps/user-preference-service/tsconfig.app.json
+new file mode 100644
+index 0000000..2830215
+--- /dev/null
++++ b/apps/user-preference-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/user-preference-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/websocket-service/tsconfig.app.json b/apps/websocket-service/tsconfig.app.json
+new file mode 100644
+index 0000000..bcbaebf
+--- /dev/null
++++ b/apps/websocket-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/websocket-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/apps/worker-service/tsconfig.app.json b/apps/worker-service/tsconfig.app.json
+new file mode 100644
+index 0000000..84d5e51
+--- /dev/null
++++ b/apps/worker-service/tsconfig.app.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/worker-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/docs/superpowers/plans/2026-07-14-notification-platform-day1.md b/docs/superpowers/plans/2026-07-14-notification-platform-day1.md
+new file mode 100644
+index 0000000..9f18d21
+--- /dev/null
++++ b/docs/superpowers/plans/2026-07-14-notification-platform-day1.md
+@@ -0,0 +1,3366 @@
++# Notification Platform — Day 1 Foundation Implementation Plan
++
++> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
++
++**Goal:** Scaffold a production-grade NestJS monorepo with all infrastructure services, shared libraries, CI/CD, code quality tools, and comprehensive documentation.
++
++**Architecture:** NestJS monorepo mode with apps under `apps/` and shared libraries under `libs/`. pnpm for package management. Docker Compose for local infrastructure (PostgreSQL, Redis, RabbitMQ, LocalStack, Prometheus, Grafana, Jaeger, Mailhog, Adminer). OpenTelemetry for distributed tracing. Pino for structured logging. Terminus for health checks. Prisma for database ORM (connection only, no tables yet).
++
++**Tech Stack:** Node.js 24, NestJS, TypeScript (strict), pnpm, PostgreSQL, Redis, RabbitMQ, Prisma, Zod, Pino, OpenTelemetry, Prometheus, Grafana, Jaeger, Terminus, Docker Compose, Husky, ESLint, Prettier, GitHub Actions.
++
++## Global Constraints
++
++- All code in TypeScript with `strict: true`
++- No `any` — ESLint rule `@typescript-eslint/no-explicit-any: error`
++- No business logic for notifications — Day 1 is infrastructure only
++- Every app has: `src/`, `test/`, `Dockerfile`, `package.json`, NestJS bootstrap, AppModule, HealthController, HealthService
++- Every lib has: `src/` with `index.ts`, `<name>.module.ts`, `package.json`, `tsconfig.lib.json`
++- All file paths relative to `notification-system/` root unless absolute
++- Conventional commits for all git messages
++
++---
++
++### Task 1: Project Initialization
++
++**Files:**
++- Create: `package.json` (root)
++- Create: `pnpm-workspace.yaml`
++- Create: `.gitignore`
++- Create: `nest-cli.json`
++- Create: `tsconfig.json`
++- Create: `tsconfig.build.json`
++- Create: `apps/api-gateway/tsconfig.app.json`
++- Create: `libs/config/tsconfig.lib.json`
++- Create (shared template): `apps/placeholder-app/package.json` pattern
++- Create: `libs/config/package.json`
++
++**Interfaces:**
++- Consumes: nothing
++- Produces: Root monorepo structure with pnpm + NestJS monorepo mode
++
++- [ ] **Step 1: Create root package.json**
++
++```json
++{
++  "name": "notification-platform",
++  "version": "0.1.0",
++  "private": true,
++  "description": "Production-grade notification platform",
++  "scripts": {
++    "build": "nest build",
++    "format": "prettier --write \"**/*.ts\"",
++    "lint": "eslint \"{apps,libs}/**/*.ts\" --fix",
++    "test": "jest --passWithNoTests",
++    "test:watch": "jest --watch",
++    "test:cov": "jest --coverage",
++    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json",
++    "start:dev": "nest start --watch",
++    "start:api-gateway": "nest start api-gateway --watch",
++    "prisma:generate": "prisma generate",
++    "prisma:push": "prisma db push",
++    "prisma:studio": "prisma studio",
++    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
++    "docker:down": "docker compose -f docker/docker-compose.yml down",
++    "prepare": "husky"
++  },
++  "engines": {
++    "node": ">=24.0.0",
++    "pnpm": ">=11.0.0"
++  },
++  "packageManager": "pnpm@11.5.2"
++}
++```
++
++- [ ] **Step 2: Create pnpm-workspace.yaml**
++
++```yaml
++packages:
++  - 'apps/*'
++  - 'libs/*'
++```
++
++- [ ] **Step 3: Create .gitignore**
++
++```
++node_modules/
++dist/
++coverage/
++.env
++.env.local
++.env.*.local
++*.log
++.DS_Store
++.turbo
++prisma/*.db
++prisma/*.db-journal
++```
++
++- [ ] **Step 4: Create nest-cli.json**
++
++```json
++{
++  "$schema": "https://json.schemastore.org/nest-cli",
++  "collection": "@nestjs/schematics",
++  "sourceRoot": "apps/api-gateway/src",
++  "compilerOptions": {
++    "builder": "swc",
++    "typeCheck": true,
++    "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
++    "webpack": false
++  },
++  "monorepo": true,
++  "root": "apps/api-gateway",
++  "projects": {
++    "api-gateway": {
++      "type": "application",
++      "root": "apps/api-gateway",
++      "entryFile": "main",
++      "sourceRoot": "apps/api-gateway/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
++      }
++    },
++    "notification-service": {
++      "type": "application",
++      "root": "apps/notification-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/notification-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
++      }
++    },
++    "email-service": {
++      "type": "application",
++      "root": "apps/email-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/email-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/email-service/tsconfig.app.json"
++      }
++    },
++    "push-service": {
++      "type": "application",
++      "root": "apps/push-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/push-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/push-service/tsconfig.app.json"
++      }
++    },
++    "sms-service": {
++      "type": "application",
++      "root": "apps/sms-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/sms-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/sms-service/tsconfig.app.json"
++      }
++    },
++    "websocket-service": {
++      "type": "application",
++      "root": "apps/websocket-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/websocket-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/websocket-service/tsconfig.app.json"
++      }
++    },
++    "scheduler-service": {
++      "type": "application",
++      "root": "apps/scheduler-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/scheduler-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/scheduler-service/tsconfig.app.json"
++      }
++    },
++    "worker-service": {
++      "type": "application",
++      "root": "apps/worker-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/worker-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/worker-service/tsconfig.app.json"
++      }
++    },
++    "template-service": {
++      "type": "application",
++      "root": "apps/template-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/template-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/template-service/tsconfig.app.json"
++      }
++    },
++    "user-preference-service": {
++      "type": "application",
++      "root": "apps/user-preference-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/user-preference-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/user-preference-service/tsconfig.app.json"
++      }
++    },
++    "config": {
++      "type": "library",
++      "root": "libs/config",
++      "entryFile": "index",
++      "sourceRoot": "libs/config/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/config/tsconfig.lib.json"
++      }
++    },
++    "database": {
++      "type": "library",
++      "root": "libs/database",
++      "entryFile": "index",
++      "sourceRoot": "libs/database/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/database/tsconfig.lib.json"
++      }
++    },
++    "logger": {
++      "type": "library",
++      "root": "libs/logger",
++      "entryFile": "index",
++      "sourceRoot": "libs/logger/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/logger/tsconfig.lib.json"
++      }
++    },
++    "events": {
++      "type": "library",
++      "root": "libs/events",
++      "entryFile": "index",
++      "sourceRoot": "libs/events/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/events/tsconfig.lib.json"
++      }
++    },
++    "dto": {
++      "type": "library",
++      "root": "libs/dto",
++      "entryFile": "index",
++      "sourceRoot": "libs/dto/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/dto/tsconfig.lib.json"
++      }
++    },
++    "utils": {
++      "type": "library",
++      "root": "libs/utils",
++      "entryFile": "index",
++      "sourceRoot": "libs/utils/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/utils/tsconfig.lib.json"
++      }
++    },
++    "common": {
++      "type": "library",
++      "root": "libs/common",
++      "entryFile": "index",
++      "sourceRoot": "libs/common/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/common/tsconfig.lib.json"
++      }
++    },
++    "observability": {
++      "type": "library",
++      "root": "libs/observability",
++      "entryFile": "index",
++      "sourceRoot": "libs/observability/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/observability/tsconfig.lib.json"
++      }
++    }
++  }
++}
++```
++
++- [ ] **Step 5: Create root tsconfig.json**
++
++```json
++{
++  "compilerOptions": {
++    "module": "commonjs",
++    "declaration": true,
++    "removeComments": true,
++    "emitDecoratorMetadata": true,
++    "experimentalDecorators": true,
++    "allowSyntheticDefaultImports": true,
++    "target": "ES2022",
++    "sourceMap": true,
++    "outDir": "./dist",
++    "baseUrl": "./",
++    "incremental": true,
++    "skipLibCheck": true,
++    "strict": true,
++    "strictNullChecks": true,
++    "noImplicitAny": true,
++    "strictBindCallApply": true,
++    "forceConsistentCasingInFileNames": true,
++    "noFallthroughCasesInSwitch": true,
++    "esModuleInterop": true,
++    "resolveJsonModule": true,
++    "paths": {
++      "@app/config": ["libs/config/src"],
++      "@app/config/*": ["libs/config/src/*"],
++      "@app/database": ["libs/database/src"],
++      "@app/database/*": ["libs/database/src/*"],
++      "@app/logger": ["libs/logger/src"],
++      "@app/logger/*": ["libs/logger/src/*"],
++      "@app/events": ["libs/events/src"],
++      "@app/events/*": ["libs/events/src/*"],
++      "@app/dto": ["libs/dto/src"],
++      "@app/dto/*": ["libs/dto/src/*"],
++      "@app/utils": ["libs/utils/src"],
++      "@app/utils/*": ["libs/utils/src/*"],
++      "@app/common": ["libs/common/src"],
++      "@app/common/*": ["libs/common/src/*"],
++      "@app/observability": ["libs/observability/src"],
++      "@app/observability/*": ["libs/observability/src/*"]
++    }
++  }
++}
++```
++
++- [ ] **Step 6: Create tsconfig.build.json**
++
++```json
++{
++  "extends": "./tsconfig.json",
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "**/*test.ts"]
++}
++```
++
++- [ ] **Step 7: Create dirs and tsconfig.app.json for api-gateway**
++
++Run:
++```bash
++mkdir -p apps/api-gateway/src apps/api-gateway/test
++```
++
++Create `apps/api-gateway/tsconfig.app.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/api-gateway"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 8: Create lib workspace package.json template**
++
++Create `libs/config/package.json`:
++```json
++{
++  "name": "@app/config",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
++```
++
++- [ ] **Step 9: Create tsconfig.lib.json for each lib**
++
++Create `libs/config/tsconfig.lib.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/config"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 10: Verify structure**
++
++Run: `ls -la apps/ libs/`
++Expected: folder structure exists
++
++- [ ] **Step 11: Commit**
++
++```bash
++git init
++git add -A
++git commit -m "chore: initialize nestjs monorepo with pnpm workspaces"
++```
++
++---
++
++### Task 2: Install Dependencies
++
++**Files:**
++- Modify: `package.json` (root — dependencies section)
++- Create: `.npmrc`
++
++**Interfaces:**
++- Consumes: Task 1 (root exists)
++- Produces: All npm packages installed
++
++- [ ] **Step 1: Create .npmrc**
++
++```
++auto-install-peers=true
++strict-peer-dependencies=false
++```
++
++- [ ] **Step 2: Install NestJS core dependencies**
++
++Run:
++```bash
++pnpm add @nestjs/core @nestjs/common @nestjs/platform-express @nestjs/config @nestjs/swagger @nestjs/terminus @nestjs/microservices reflect-metadata rxjs class-transformer class-validator
++```
++
++- [ ] **Step 3: Install infrastructure client deps**
++
++Run:
++```bash
++pnpm add @prisma/client ioredis amqplib amqp-connection-manager
++```
++
++- [ ] **Step 4: Install logging and observability deps**
++
++Run:
++```bash
++pnpm add pino pino-pretty @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions prom-client
++```
++
++- [ ] **Step 5: Install validation deps**
++
++Run:
++```bash
++pnpm add zod
++```
++
++- [ ] **Step 6: Install dev dependencies**
++
++Run:
++```bash
++pnpm add -D typescript @types/node @types/express @types/amqplib @types/ioredis @nestjs/cli @nestjs/schematics @nestjs/testing jest ts-jest ts-node @types/jest eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier eslint-config-prettier eslint-plugin-prettier husky lint-staged prisma @swc/core @swc/jest source-map-support
++```
++
++- [ ] **Step 7: Verify install**
++
++Run: `pnpm ls --depth 0`
++Expected: All dependencies listed without errors
++
++- [ ] **Step 8: Commit**
++
++```bash
++git add -A
++git commit -m "chore: install all project dependencies"
++```
++
++---
++
++### Task 3: Config Library (@app/config)
++
++**Files:**
++- Create: `libs/config/src/index.ts`
++- Create: `libs/config/src/config.module.ts`
++- Create: `libs/config/src/config.schema.ts`
++- Create: `libs/config/src/config.service.ts`
++- Create: `libs/config/src/__tests__/config.service.spec.ts`
++
++**Interfaces:**
++- Consumes: Task 1 (lib skeleton), Task 2 (zod, @nestjs/config)
++- Produces: `ConfigModule` exportable at `@app/config`, `ConfigService` with validated env vars
++
++- [ ] **Step 1: Create config schema**
++
++Create `libs/config/src/config.schema.ts`:
++```typescript
++import { z } from 'zod';
++
++export const EnvironmentSchema = z.object({
++  NODE_ENV: z.enum(['development', 'staging', 'production']).default('development'),
++  PORT: z.coerce.number().positive().default(3000),
++  DATABASE_URL: z.string().url(),
++  REDIS_URL: z.string().url(),
++  RABBITMQ_URL: z.string().url(),
++  AWS_ACCESS_KEY: z.string().min(1),
++  AWS_SECRET_KEY: z.string().min(1),
++  AWS_REGION: z.string().default('us-east-1'),
++  SNS_ENDPOINT: z.string().url().optional(),
++  SQS_ENDPOINT: z.string().url().optional(),
++  LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
++  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().default('http://localhost:4318'),
++  OTEL_SERVICE_NAME: z.string().default('notification-platform'),
++  PROMETHEUS_METRICS_PATH: z.string().default('/metrics'),
++});
++
++export type Environment = z.infer<typeof EnvironmentSchema>;
++```
++
++- [ ] **Step 2: Create config service**
++
++Create `libs/config/src/config.service.ts`:
++```typescript
++import { Injectable } from '@nestjs/common';
++import { Environment, EnvironmentSchema } from './config.schema';
++
++@Injectable()
++export class ConfigService {
++  private readonly environment: Environment;
++
++  constructor() {
++    const result = EnvironmentSchema.safeParse(process.env);
++    if (!result.success) {
++      throw new Error(
++        `Environment validation failed: ${result.error.flatten().fieldErrors}\n` +
++        `Missing/invalid variables: ${JSON.stringify(result.error.flatten().fieldErrors, null, 2)}`,
++      );
++    }
++    this.environment = result.data;
++  }
++
++  get<T extends keyof Environment>(key: T): Environment[T] {
++    return this.environment[key];
++  }
++
++  getAll(): Environment {
++    return { ...this.environment };
++  }
++
++  get isDevelopment(): boolean {
++    return this.environment.NODE_ENV === 'development';
++  }
++
++  get isProduction(): boolean {
++    return this.environment.NODE_ENV === 'production';
++  }
++
++  get isStaging(): boolean {
++    return this.environment.NODE_ENV === 'staging';
++  }
++}
++```
++
++- [ ] **Step 3: Create config module**
++
++Create `libs/config/src/config.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++import { ConfigService } from './config.service';
++
++@Global()
++@Module({
++  providers: [
++    {
++      provide: ConfigService,
++      useFactory: () => new ConfigService(),
++    },
++  ],
++  exports: [ConfigService],
++})
++export class ConfigModule {}
++```
++
++- [ ] **Step 4: Create index**
++
++Create `libs/config/src/index.ts`:
++```typescript
++export { ConfigModule } from './config.module';
++export { ConfigService } from './config.service';
++export { EnvironmentSchema, Environment } from './config.schema';
++```
++
++- [ ] **Step 5: Create test**
++
++Create `libs/config/src/__tests__/config.service.spec.ts`:
++```typescript
++import { ConfigService } from '../config.service';
++
++describe('ConfigService', () => {
++  const originalEnv = process.env;
++
++  beforeEach(() => {
++    process.env = { ...originalEnv };
++  });
++
++  afterEach(() => {
++    process.env = originalEnv;
++  });
++
++  it('should create instance with valid environment', () => {
++    process.env.DATABASE_URL = 'postgresql://localhost:5432/test';
++    process.env.REDIS_URL = 'redis://localhost:6379';
++    process.env.RABBITMQ_URL = 'amqp://localhost:5672';
++    process.env.AWS_ACCESS_KEY = 'test';
++    process.env.AWS_SECRET_KEY = 'test';
++
++    const service = new ConfigService();
++    expect(service.get('DATABASE_URL')).toBe('postgresql://localhost:5432/test');
++    expect(service.get('NODE_ENV')).toBe('development');
++    expect(service.isDevelopment).toBe(true);
++  });
++
++  it('should throw with invalid environment', () => {
++    process.env.DATABASE_URL = '';
++    process.env.REDIS_URL = '';
++    process.env.RABBITMQ_URL = '';
++    process.env.AWS_ACCESS_KEY = '';
++    process.env.AWS_SECRET_KEY = '';
++
++    expect(() => new ConfigService()).toThrow('Environment validation failed');
++  });
++});
++```
++
++- [ ] **Step 6: Create lib package.json**
++
++`libs/config/package.json`:
++```json
++{
++  "name": "@app/config",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts",
++  "dependencies": {
++    "zod": "^3.23.0"
++  }
++}
++```
++
++- [ ] **Step 7: Run tests**
++
++Run:
++```bash
++pnpm jest libs/config/src/__tests__/config.service.spec.ts --passWithNoTests
++```
++Expected: Tests pass
++
++- [ ] **Step 8: Commit**
++
++```bash
++git add -A
++git commit -m "feat(config): add env validation with zod schema"
++```
++
++---
++
++### Task 4: Logger Library (@app/logger)
++
++**Files:**
++- Create: `libs/logger/src/index.ts`
++- Create: `libs/logger/src/logger.module.ts`
++- Create: `libs/logger/src/logger.service.ts`
++- Create: `libs/logger/src/logger.interceptor.ts`
++- Create: `libs/logger/package.json`
++- Create: `libs/logger/tsconfig.lib.json`
++
++**Interfaces:**
++- Consumes: Task 3 (`ConfigService`)
++- Produces: `LoggerModule` with Pino, logging interceptor, request ID tracking
++
++- [ ] **Step 1: Create logger service**
++
++Create `libs/logger/src/logger.service.ts`:
++```typescript
++import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
++import pino, { Logger as PinoLogger, LoggerOptions } from 'pino';
++
++@Injectable()
++export class LoggerService implements NestLoggerService {
++  private readonly logger: PinoLogger;
++
++  constructor(options?: LoggerOptions) {
++    this.logger = pino({
++      transport: process.env.NODE_ENV !== 'production'
++        ? { target: 'pino-pretty', options: { colorize: true } }
++        : undefined,
++      level: process.env.LOG_LEVEL || 'info',
++      ...options,
++    });
++  }
++
++  log(message: unknown, context?: string): void {
++    this.logger.info({ context }, message as string);
++  }
++
++  error(message: unknown, trace?: string, context?: string): void {
++    this.logger.error({ context, trace }, message as string);
++  }
++
++  warn(message: unknown, context?: string): void {
++    this.logger.warn({ context }, message as string);
++  }
++
++  debug(message: unknown, context?: string): void {
++    this.logger.debug({ context }, message as string);
++  }
++
++  verbose(message: unknown, context?: string): void {
++    this.logger.trace({ context }, message as string);
++  }
++
++  getPinoLogger(): PinoLogger {
++    return this.logger;
++  }
++}
++```
++
++- [ ] **Step 2: Create logging interceptor**
++
++Create `libs/logger/src/logger.interceptor.ts`:
++```typescript
++import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
++import { Observable } from 'rxjs';
++import { tap } from 'rxjs/operators';
++import { randomUUID } from 'node:crypto';
++import { LoggerService } from './logger.service';
++
++@Injectable()
++export class LoggingInterceptor implements NestInterceptor {
++  constructor(private readonly logger: LoggerService) {}
++
++  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
++    const request = context.switchToHttp().getRequest();
++    const requestId = randomUUID();
++    request.requestId = requestId;
++
++    const { method, url } = request;
++    const now = Date.now();
++
++    return next.handle().pipe(
++      tap(() => {
++        const response = context.switchToHttp().getResponse();
++        const statusCode = response.statusCode;
++        const responseTime = Date.now() - now;
++
++        this.logger.log({
++          msg: 'HTTP Request',
++          requestId,
++          method,
++          url,
++          statusCode,
++          responseTime: `${responseTime}ms`,
++        });
++      }),
++    );
++  }
++}
++```
++
++- [ ] **Step 3: Create logger module**
++
++Create `libs/logger/src/logger.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++import { LoggerService } from './logger.service';
++import { LoggingInterceptor } from './logger.interceptor';
++
++@Global()
++@Module({
++  providers: [
++    {
++      provide: LoggerService,
++      useFactory: () => new LoggerService(),
++    },
++    LoggingInterceptor,
++  ],
++  exports: [LoggerService, LoggingInterceptor],
++})
++export class LoggerModule {}
++```
++
++- [ ] **Step 4: Create index**
++
++Create `libs/logger/src/index.ts`:
++```typescript
++export { LoggerModule } from './logger.module';
++export { LoggerService } from './logger.service';
++export { LoggingInterceptor } from './logger.interceptor';
++```
++
++- [ ] **Step 5: Create lib package.json**
++
++`libs/logger/package.json`:
++```json
++{
++  "name": "@app/logger",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts",
++  "dependencies": {
++    "pino": "^9.0.0",
++    "pino-pretty": "^13.0.0"
++  }
++}
++```
++
++- [ ] **Step 6: Create tsconfig.lib.json**
++
++`libs/logger/tsconfig.lib.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/logger"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 7: Commit**
++
++```bash
++git add -A
++git commit -m "feat(logger): add pino logger module with request logging interceptor"
++```
++
++---
++
++### Task 5: Database Library (@app/database)
++
++**Files:**
++- Create: `libs/database/src/index.ts`
++- Create: `libs/database/src/database.module.ts`
++- Create: `libs/database/src/prisma.service.ts`
++- Create: `libs/database/src/redis.service.ts`
++- Create: `libs/database/src/redis.provider.ts`
++- Create: `prisma/schema.prisma`
++- Create: `libs/database/package.json`
++- Create: `libs/database/tsconfig.lib.json`
++
++**Interfaces:**
++- Consumes: Task 3 (`ConfigService`)
++- Produces: `PrismaService` (connection verify), `RedisService` (connection verify), `DatabaseModule`
++
++- [ ] **Step 1: Create Prisma service**
++
++Create `libs/database/src/prisma.service.ts`:
++```typescript
++import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
++import { PrismaClient } from '@prisma/client';
++
++@Injectable()
++export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
++  private readonly logger = new Logger(PrismaService.name);
++
++  async onModuleInit(): Promise<void> {
++    try {
++      await this.$connect();
++      this.logger.log('Connected to PostgreSQL');
++    } catch (error) {
++      this.logger.error('Failed to connect to PostgreSQL', (error as Error).message);
++    }
++  }
++
++  async onModuleDestroy(): Promise<void> {
++    await this.$disconnect();
++  }
++
++  async verifyConnection(): Promise<boolean> {
++    try {
++      await this.$queryRaw`SELECT 1`;
++      return true;
++    } catch {
++      return false;
++    }
++  }
++}
++```
++
++- [ ] **Step 2: Create Redis service**
++
++Create `libs/database/src/redis.service.ts`:
++```typescript
++import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
++import Redis from 'ioredis';
++
++@Injectable()
++export class RedisService extends Redis implements OnModuleInit, OnModuleDestroy {
++  private readonly logger = new Logger(RedisService.name);
++
++  constructor(url: string) {
++    super(url, {
++      lazyConnect: true,
++      retryStrategy: (times) => Math.min(times * 50, 2000),
++    });
++  }
++
++  async onModuleInit(): Promise<void> {
++    try {
++      await this.connect();
++      this.logger.log('Connected to Redis');
++    } catch (error) {
++      this.logger.error('Failed to connect to Redis', (error as Error).message);
++    }
++  }
++
++  async onModuleDestroy(): Promise<void> {
++    await this.quit();
++  }
++
++  async verifyConnection(): Promise<boolean> {
++    try {
++      const result = await this.ping();
++      return result === 'PONG';
++    } catch {
++      return false;
++    }
++  }
++}
++```
++
++- [ ] **Step 3: Create Redis provider factory**
++
++Create `libs/database/src/redis.provider.ts`:
++```typescript
++import { Provider } from '@nestjs/common';
++import { RedisService } from './redis.service';
++import { ConfigService } from '@app/config';
++
++export const RedisProvider: Provider = {
++  provide: RedisService,
++  useFactory: (configService: ConfigService) => {
++    return new RedisService(configService.get('REDIS_URL'));
++  },
++  inject: [ConfigService],
++};
++```
++
++- [ ] **Step 4: Create database module**
++
++Create `libs/database/src/database.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++import { PrismaService } from './prisma.service';
++import { RedisProvider } from './redis.provider';
++import { RedisService } from './redis.service';
++
++@Global()
++@Module({
++  providers: [PrismaService, RedisProvider],
++  exports: [PrismaService, RedisService],
++})
++export class DatabaseModule {}
++```
++
++- [ ] **Step 5: Create index**
++
++Create `libs/database/src/index.ts`:
++```typescript
++export { DatabaseModule } from './database.module';
++export { PrismaService } from './prisma.service';
++export { RedisService } from './redis.service';
++```
++
++- [ ] **Step 6: Create Prisma schema**
++
++Create `prisma/schema.prisma`:
++```prisma
++generator client {
++  provider = "prisma-client-js"
++}
++
++datasource db {
++  provider = "postgresql"
++  url      = env("DATABASE_URL")
++}
++```
++
++- [ ] **Step 7: Generate Prisma client**
++
++Run:
++```bash
++pnpm prisma generate
++```
++Expected: Prisma client generated in node_modules
++
++- [ ] **Step 8: Create lib package.json**
++
++`libs/database/package.json`:
++```json
++{
++  "name": "@app/database",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts",
++  "dependencies": {
++    "@prisma/client": "^6.0.0",
++    "ioredis": "^5.4.0"
++  }
++}
++```
++
++- [ ] **Step 9: Create tsconfig.lib.json**
++
++`libs/database/tsconfig.lib.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/database"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 10: Commit**
++
++```bash
++git add -A
++git commit -m "feat(database): add prisma and redis connection modules"
++```
++
++---
++
++### Task 6: Events Library (@app/events)
++
++**Files:**
++- Create: `libs/events/src/index.ts`
++- Create: `libs/events/src/events.module.ts`
++- Create: `libs/events/src/events.service.ts`
++- Create: `libs/events/package.json`
++- Create: `libs/events/tsconfig.lib.json`
++
++**Interfaces:**
++- Consumes: Task 3 (`ConfigService`)
++- Produces: `EventsModule`, `EventsService` (RabbitMQ connection only, no pub/sub logic)
++
++- [ ] **Step 1: Create events service**
++
++Create `libs/events/src/events.service.ts`:
++```typescript
++import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
++import { connect, Connection, Channel, ConsumeMessage } from 'amqplib';
++
++@Injectable()
++export class EventsService implements OnModuleInit, OnModuleDestroy {
++  private connection: Connection | null = null;
++  private channel: Channel | null = null;
++  private readonly logger = new Logger(EventsService.name);
++
++  constructor(private readonly url: string) {}
++
++  async onModuleInit(): Promise<void> {
++    try {
++      this.connection = await connect(this.url);
++      this.channel = await this.connection.createChannel();
++      this.logger.log('Connected to RabbitMQ');
++    } catch (error) {
++      this.logger.error('Failed to connect to RabbitMQ', (error as Error).message);
++    }
++  }
++
++  async onModuleDestroy(): Promise<void> {
++    try {
++      await this.channel?.close();
++      await this.connection?.close();
++    } catch (error) {
++      this.logger.error('Error closing RabbitMQ connection', (error as Error).message);
++    }
++  }
++
++  async verifyConnection(): Promise<boolean> {
++    try {
++      return this.connection !== null && this.channel !== null;
++    } catch {
++      return false;
++    }
++  }
++
++  getChannel(): Channel | null {
++    return this.channel;
++  }
++}
++```
++
++- [ ] **Step 2: Create events module**
++
++Create `libs/events/src/events.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++import { EventsService } from './events.service';
++import { ConfigService } from '@app/config';
++
++@Global()
++@Module({
++  providers: [
++    {
++      provide: EventsService,
++      useFactory: (configService: ConfigService) => {
++        return new EventsService(configService.get('RABBITMQ_URL'));
++      },
++      inject: [ConfigService],
++    },
++  ],
++  exports: [EventsService],
++})
++export class EventsModule {}
++```
++
++- [ ] **Step 3: Create index**
++
++Create `libs/events/src/index.ts`:
++```typescript
++export { EventsModule } from './events.module';
++export { EventsService } from './events.service';
++```
++
++- [ ] **Step 4: Create lib package.json**
++
++`libs/events/package.json`:
++```json
++{
++  "name": "@app/events",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts",
++  "dependencies": {
++    "amqplib": "^0.10.0"
++  }
++}
++```
++
++- [ ] **Step 5: Create tsconfig.lib.json**
++
++`libs/events/tsconfig.lib.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/events"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 6: Commit**
++
++```bash
++git add -A
++git commit -m "feat(events): add rabbitmq connection module"
++```
++
++---
++
++### Task 7: Observability Library (@app/observability)
++
++**Files:**
++- Create: `libs/observability/src/index.ts`
++- Create: `libs/observability/src/observability.module.ts`
++- Create: `libs/observability/src/tracing.service.ts`
++- Create: `libs/observability/src/metrics.service.ts`
++- Create: `libs/observability/src/health.controller.ts`
++- Create: `libs/observability/package.json`
++- Create: `libs/observability/tsconfig.lib.json`
++- Create: `libs/observability/src/__tests__/metrics.service.spec.ts`
++
++**Interfaces:**
++- Consumes: Task 3, Task 4, Task 5
++- Produces: OpenTelemetry tracing, Prometheus metrics, Terminus health endpoints
++
++- [ ] **Step 1: Create tracing service**
++
++Create `libs/observability/src/tracing.service.ts`:
++```typescript
++import { Injectable, OnModuleInit } from '@nestjs/common';
++import { NodeSDK } from '@opentelemetry/sdk-node';
++import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
++import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
++import { Resource } from '@opentelemetry/resources';
++import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
++import { ConfigService } from '@app/config';
++
++@Injectable()
++export class TracingService implements OnModuleInit {
++  private sdk: NodeSDK | null = null;
++
++  constructor(private readonly configService: ConfigService) {}
++
++  onModuleInit(): void {
++    const serviceName = this.configService.get('OTEL_SERVICE_NAME');
++
++    const traceExporter = new OTLPTraceExporter({
++      url: this.configService.get('OTEL_EXPORTER_OTLP_ENDPOINT'),
++    });
++
++    this.sdk = new NodeSDK({
++      resource: new Resource({
++        [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
++      }),
++      traceExporter,
++      instrumentations: [getNodeAutoInstrumentations()],
++    });
++
++    try {
++      this.sdk.start();
++      console.log('OpenTelemetry tracing started');
++    } catch (error) {
++      console.error('Failed to start OpenTelemetry', error);
++    }
++  }
++
++  async shutdown(): Promise<void> {
++    await this.sdk?.shutdown();
++  }
++}
++```
++
++- [ ] **Step 2: Create metrics service**
++
++Create `libs/observability/src/metrics.service.ts`:
++```typescript
++import { Injectable, OnModuleInit } from '@nestjs/common';
++import client from 'prom-client';
++import { ConfigService } from '@app/config';
++
++@Injectable()
++export class MetricsService implements OnModuleInit {
++  constructor(private readonly configService: ConfigService) {}
++
++  onModuleInit(): void {
++    client.collectDefaultMetrics();
++  }
++
++  getMetrics(): Promise<string> {
++    return client.register.metrics();
++  }
++
++  getContentType(): string {
++    return client.register.contentType;
++  }
++}
++```
++
++- [ ] **Step 3: Create health controller**
++
++Create `libs/observability/src/health.controller.ts`:
++```typescript
++import { Controller, Get } from '@nestjs/common';
++import { HealthCheckService, HealthCheck, HealthCheckResult } from '@nestjs/terminus';
++
++@Controller()
++export class HealthController {
++  constructor(private readonly health: HealthCheckService) {}
++
++  @Get('/health')
++  @HealthCheck()
++  async check(): Promise<HealthCheckResult> {
++    return this.health.check([]);
++  }
++
++  @Get('/live')
++  @HealthCheck()
++  async live(): Promise<HealthCheckResult> {
++    return this.health.check([]);
++  }
++
++  @Get('/ready')
++  @HealthCheck()
++  async ready(): Promise<HealthCheckResult> {
++    return this.health.check([]);
++  }
++}
++```
++
++- [ ] **Step 4: Create observability module**
++
++Create `libs/observability/src/observability.module.ts`:
++```typescript
++import { Module } from '@nestjs/common';
++import { TerminusModule } from '@nestjs/terminus';
++import { TracingService } from './tracing.service';
++import { MetricsService } from './metrics.service';
++import { HealthController } from './health.controller';
++
++@Module({
++  imports: [TerminusModule],
++  controllers: [HealthController],
++  providers: [TracingService, MetricsService],
++  exports: [TracingService, MetricsService],
++})
++export class ObservabilityModule {}
++```
++
++- [ ] **Step 5: Create index**
++
++Create `libs/observability/src/index.ts`:
++```typescript
++export { ObservabilityModule } from './observability.module';
++export { TracingService } from './tracing.service';
++export { MetricsService } from './metrics.service';
++```
++
++- [ ] **Step 6: Create test**
++
++Create `libs/observability/src/__tests__/metrics.service.spec.ts`:
++```typescript
++import { MetricsService } from '../metrics.service';
++import { ConfigService } from '@app/config';
++
++describe('MetricsService', () => {
++  it('should be defined', () => {
++    const configService = {} as ConfigService;
++    const service = new MetricsService(configService);
++    expect(service).toBeDefined();
++  });
++});
++```
++
++- [ ] **Step 7: Create lib package.json**
++
++`libs/observability/package.json`:
++```json
++{
++  "name": "@app/observability",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts",
++  "dependencies": {
++    "@opentelemetry/api": "^1.9.0",
++    "@opentelemetry/sdk-node": "^0.54.0",
++    "@opentelemetry/auto-instrumentations-node": "^0.54.0",
++    "@opentelemetry/exporter-trace-otlp-http": "^0.54.0",
++    "@opentelemetry/resources": "^1.27.0",
++    "@opentelemetry/semantic-conventions": "^1.27.0",
++    "prom-client": "^15.1.0",
++    "@nestjs/terminus": "^10.2.0"
++  }
++}
++```
++
++- [ ] **Step 8: Create tsconfig.lib.json**
++
++`libs/observability/tsconfig.lib.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/observability"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 9: Run tests**
++
++Run: `pnpm jest libs/observability --passWithNoTests`
++Expected: Tests pass
++
++- [ ] **Step 10: Commit**
++
++```bash
++git add -A
++git commit -m "feat(observability): add opentelemetry tracing, prometheus metrics, terminus health"
++```
++
++---
++
++### Task 8: Common / Utils / DTO Libraries
++
++**Files:**
++- Create: `libs/common/src/index.ts`, `libs/common/src/common.module.ts`
++- Create: `libs/utils/src/index.ts`, `libs/utils/src/utils.module.ts`
++- Create: `libs/dto/src/index.ts`, `libs/dto/src/dto.module.ts`
++- Create: package.json and tsconfig.lib.json for each
++- Create: `libs/utils/src/__tests__/index.spec.ts`
++
++**Interfaces:**
++- Consumes: nothing
++- Produces: Shared utility modules with placeholder structure
++
++- [ ] **Step 1: Create common module**
++
++Create `libs/common/src/common.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++
++@Global()
++@Module({
++  providers: [],
++  exports: [],
++})
++export class CommonModule {}
++```
++
++Create `libs/common/src/index.ts`:
++```typescript
++export { CommonModule } from './common.module';
++```
++
++- [ ] **Step 2: Create utils module**
++
++Create `libs/utils/src/utils.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++
++@Global()
++@Module({
++  providers: [],
++  exports: [],
++})
++export class UtilsModule {}
++```
++
++Create `libs/utils/src/index.ts`:
++```typescript
++export { UtilsModule } from './utils.module';
++```
++
++Create `libs/utils/src/__tests__/index.spec.ts`:
++```typescript
++describe('Utils', () => {
++  it('should export UtilsModule', () => {
++    const { UtilsModule } = require('../utils.module');
++    expect(UtilsModule).toBeDefined();
++  });
++});
++```
++
++- [ ] **Step 3: Create dto module**
++
++Create `libs/dto/src/dto.module.ts`:
++```typescript
++import { Global, Module } from '@nestjs/common';
++
++@Global()
++@Module({
++  providers: [],
++  exports: [],
++})
++export class DtoModule {}
++```
++
++Create `libs/dto/src/index.ts`:
++```typescript
++export { DtoModule } from './dto.module';
++```
++
++- [ ] **Step 4: Create package.json for common**
++
++`libs/common/package.json`:
++```json
++{
++  "name": "@app/common",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
++```
++
++`libs/utils/package.json`:
++```json
++{
++  "name": "@app/utils",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
++```
++
++`libs/dto/package.json`:
++```json
++{
++  "name": "@app/dto",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
++```
++
++- [ ] **Step 5: Create tsconfig.lib.json for each**
++
++For each of common, utils, dto — same pattern:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/<name>"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 6: Run tests**
++
++Run:
++```bash
++pnpm jest libs/utils --passWithNoTests
++```
++Expected: Tests pass
++
++- [ ] **Step 7: Commit**
++
++```bash
++git add -A
++git commit -m "feat(common): add shared common, utils, and dto library modules"
++```
++
++---
++
++### Task 9: API Gateway Application
++
++**Files:**
++- Create: `apps/api-gateway/src/main.ts`
++- Create: `apps/api-gateway/src/app.module.ts`
++- Create: `apps/api-gateway/src/app.controller.ts`
++- Create: `apps/api-gateway/src/app.controller.spec.ts`
++- Create: `apps/api-gateway/src/health/health.controller.ts`
++- Create: `apps/api-gateway/src/health/health.service.ts`
++- Create: `apps/api-gateway/src/health/health.module.ts`
++- Create: `apps/api-gateway/src/metrics/metrics.controller.ts`
++- Create: `apps/api-gateway/src/swagger.ts`
++- Create: `apps/api-gateway/test/app.e2e-spec.ts`
++- Create: `apps/api-gateway/test/jest-e2e.json`
++- Create: `apps/api-gateway/tsconfig.spec.json`
++- Create: `apps/api-gateway/package.json`
++- Create: `apps/api-gateway/Dockerfile`
++
++**Interfaces:**
++- Consumes: All libraries (config, logger, database, events, observability, common, utils, dto)
++- Produces: Working HTTP server with Swagger, health, metrics, logging, tracing
++
++- [ ] **Step 1: Create health module**
++
++Create `apps/api-gateway/src/health/health.service.ts`:
++```typescript
++import { Injectable } from '@nestjs/common';
++
++@Injectable()
++export class HealthService {
++  check(): { status: string; timestamp: string; uptime: number } {
++    return {
++      status: 'ok',
++      timestamp: new Date().toISOString(),
++      uptime: process.uptime(),
++    };
++  }
++}
++```
++
++Create `apps/api-gateway/src/health/health.controller.ts`:
++```typescript
++import { Controller, Get } from '@nestjs/common';
++import { HealthService } from './health.service';
++
++@Controller('health')
++export class HealthController {
++  constructor(private readonly healthService: HealthService) {}
++
++  @Get()
++  check() {
++    return this.healthService.check();
++  }
++}
++```
++
++Create `apps/api-gateway/src/health/health.module.ts`:
++```typescript
++import { Module } from '@nestjs/common';
++import { HealthController } from './health.controller';
++import { HealthService } from './health.service';
++
++@Module({
++  controllers: [HealthController],
++  providers: [HealthService],
++  exports: [HealthService],
++})
++export class HealthModule {}
++```
++
++- [ ] **Step 2: Create metrics controller**
++
++Create `apps/api-gateway/src/metrics/metrics.controller.ts`:
++```typescript
++import { Controller, Get, Header } from '@nestjs/common';
++import { MetricsService } from '@app/observability';
++
++@Controller()
++export class MetricsController {
++  constructor(private readonly metricsService: MetricsService) {}
++
++  @Get('/metrics')
++  @Header('Content-Type', 'text/plain; charset=utf-8')
++  async getMetrics(): Promise<string> {
++    return this.metricsService.getMetrics();
++  }
++}
++```
++
++- [ ] **Step 3: Create Swagger config**
++
++Create `apps/api-gateway/src/swagger.ts`:
++```typescript
++import { INestApplication } from '@nestjs/common';
++import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
++
++export function setupSwagger(app: INestApplication): void {
++  const config = new DocumentBuilder()
++    .setTitle('Notification Platform API')
++    .setDescription('Production-grade notification platform supporting email, push, SMS, and WebSocket notifications')
++    .setVersion('v1')
++    .addTag('health', 'Health check endpoints')
++    .addTag('metrics', 'Prometheus metrics endpoint')
++    .addBearerAuth()
++    .build();
++
++  const document = SwaggerModule.createDocument(app, config);
++  SwaggerModule.setup('api/docs', app, document);
++}
++```
++
++- [ ] **Step 4: Create app controller**
++
++Create `apps/api-gateway/src/app.controller.ts`:
++```typescript
++import { Controller, Get } from '@nestjs/common';
++import { ApiTags, ApiOperation } from '@nestjs/swagger';
++
++@ApiTags('app')
++@Controller()
++export class AppController {
++  @Get()
++  @ApiOperation({ summary: 'Root endpoint' })
++  getRoot(): { service: string; version: string } {
++    return {
++      service: 'notification-platform',
++      version: '0.1.0',
++    };
++  }
++}
++```
++
++- [ ] **Step 5: Create app module**
++
++Create `apps/api-gateway/src/app.module.ts`:
++```typescript
++import { Module } from '@nestjs/common';
++import { APP_INTERCEPTOR } from '@nestjs/core';
++import { ConfigModule } from '@app/config';
++import { LoggerModule, LoggingInterceptor } from '@app/logger';
++import { DatabaseModule } from '@app/database';
++import { EventsModule } from '@app/events';
++import { ObservabilityModule } from '@app/observability';
++import { CommonModule } from '@app/common';
++import { UtilsModule } from '@app/utils';
++import { DtoModule } from '@app/dto';
++import { HealthModule } from './health/health.module';
++import { MetricsController } from './metrics/metrics.controller';
++import { AppController } from './app.controller';
++
++@Module({
++  imports: [
++    ConfigModule,
++    LoggerModule,
++    DatabaseModule,
++    EventsModule,
++    ObservabilityModule,
++    CommonModule,
++    UtilsModule,
++    DtoModule,
++    HealthModule,
++  ],
++  controllers: [AppController, MetricsController],
++  providers: [
++    {
++      provide: APP_INTERCEPTOR,
++      useClass: LoggingInterceptor,
++    },
++  ],
++})
++export class AppModule {}
++```
++
++- [ ] **Step 6: Create main.ts**
++
++Create `apps/api-gateway/src/main.ts`:
++```typescript
++import { NestFactory } from '@nestjs/core';
++import { Logger } from '@nestjs/common';
++import { AppModule } from './app.module';
++import { setupSwagger } from './swagger';
++
++async function bootstrap(): Promise<void> {
++  const app = await NestFactory.create(AppModule, {
++    bufferLogs: true,
++  });
++
++  app.enableCors();
++  app.setGlobalPrefix('api/v1', { exclude: ['/health', '/live', '/ready', '/metrics'] });
++
++  setupSwagger(app);
++
++  const port = process.env.PORT || 3000;
++  const logger = new Logger('Bootstrap');
++  logger.log(`Application starting on port ${port}`);
++
++  await app.listen(port);
++  logger.log(`Application running on http://localhost:${port}`);
++  logger.log(`Swagger docs at http://localhost:${port}/api/docs`);
++}
++
++void bootstrap();
++```
++
++- [ ] **Step 7: Create app controller test**
++
++Create `apps/api-gateway/src/app.controller.spec.ts`:
++```typescript
++import { Test, TestingModule } from '@nestjs/testing';
++import { AppController } from './app.controller';
++
++describe('AppController', () => {
++  let controller: AppController;
++
++  beforeEach(async () => {
++    const module: TestingModule = await Test.createTestingModule({
++      controllers: [AppController],
++    }).compile();
++
++    controller = module.get<AppController>(AppController);
++  });
++
++  it('should return service info', () => {
++    const result = controller.getRoot();
++    expect(result.service).toBe('notification-platform');
++    expect(result.version).toBe('0.1.0');
++  });
++});
++```
++
++- [ ] **Step 8: Create e2e test**
++
++Create `apps/api-gateway/test/app.e2e-spec.ts`:
++```typescript
++import { Test, TestingModule } from '@nestjs/testing';
++import { INestApplication } from '@nestjs/common';
++import * as request from 'supertest';
++import { AppModule } from '../src/app.module';
++
++describe('API Gateway (e2e)', () => {
++  let app: INestApplication;
++
++  beforeAll(async () => {
++    const moduleFixture: TestingModule = await Test.createTestingModule({
++      imports: [AppModule],
++    }).compile();
++
++    app = moduleFixture.createNestApplication();
++    await app.init();
++  });
++
++  afterAll(async () => {
++    await app.close();
++  });
++
++  it('GET / should return service info', () => {
++    return request(app.getHttpServer())
++      .get('/')
++      .expect(200)
++      .expect((res) => {
++        expect(res.body.service).toBe('notification-platform');
++      });
++  });
++});
++```
++
++- [ ] **Step 9: Create jest-e2e.json**
++
++Create `apps/api-gateway/test/jest-e2e.json`:
++```json
++{
++  "moduleFileExtensions": ["js", "json", "ts"],
++  "rootDir": ".",
++  "testEnvironment": "node",
++  "testRegex": ".e2e-spec.ts$",
++  "transform": {
++    "^.+\\.(t|j)s$": ["@swc/jest"]
++  },
++  "moduleNameMapper": {
++    "^@app/config(.*)$": "<rootDir>/../../libs/config/src$1",
++    "^@app/database(.*)$": "<rootDir>/../../libs/database/src$1",
++    "^@app/logger(.*)$": "<rootDir>/../../libs/logger/src$1",
++    "^@app/events(.*)$": "<rootDir>/../../libs/events/src$1",
++    "^@app/dto(.*)$": "<rootDir>/../../libs/dto/src$1",
++    "^@app/utils(.*)$": "<rootDir>/../../libs/utils/src$1",
++    "^@app/common(.*)$": "<rootDir>/../../libs/common/src$1",
++    "^@app/observability(.*)$": "<rootDir>/../../libs/observability/src$1"
++  }
++}
++```
++
++- [ ] **Step 10: Create package.json**
++
++`apps/api-gateway/package.json`:
++```json
++{
++  "name": "api-gateway",
++  "version": "0.1.0",
++  "private": true,
++  "scripts": {
++    "start": "nest start",
++    "start:dev": "nest start --watch",
++    "start:prod": "node dist/apps/api-gateway/main"
++  }
++}
++```
++
++- [ ] **Step 11: Create Dockerfile**
++
++`apps/api-gateway/Dockerfile`:
++```dockerfile
++FROM node:24-alpine AS builder
++WORKDIR /app
++RUN npm install -g pnpm
++COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
++COPY apps/api-gateway/package.json ./apps/api-gateway/
++COPY libs/ ./libs/
++RUN pnpm install --frozen-lockfile
++COPY . .
++RUN pnpm build
++
++FROM node:24-alpine AS runner
++WORKDIR /app
++RUN npm install -g pnpm
++COPY --from=builder /app/dist ./dist
++COPY --from=builder /app/node_modules ./node_modules
++EXPOSE 3000
++CMD ["node", "dist/apps/api-gateway/main"]
++```
++
++- [ ] **Step 12: Create jest config at root**
++
++Create `jest.config.ts` at root:
++```typescript
++import type { Config } from 'jest';
++
++const config: Config = {
++  moduleFileExtensions: ['js', 'json', 'ts'],
++  rootDir: '.',
++  testRegex: '.*\\.spec\\.ts$',
++  transform: {
++    '^.+\\.(t|j)s$': ['@swc/jest'],
++  },
++  collectCoverageFrom: ['**/*.(t|j)s'],
++  coverageDirectory: './coverage',
++  testEnvironment: 'node',
++  moduleNameMapper: {
++    '^@app/config$': '<rootDir>/libs/config/src',
++    '^@app/config/(.*)$': '<rootDir>/libs/config/src/$1',
++    '^@app/database$': '<rootDir>/libs/database/src',
++    '^@app/database/(.*)$': '<rootDir>/libs/database/src/$1',
++    '^@app/logger$': '<rootDir>/libs/logger/src',
++    '^@app/logger/(.*)$': '<rootDir>/libs/logger/src/$1',
++    '^@app/events$': '<rootDir>/libs/events/src',
++    '^@app/events/(.*)$': '<rootDir>/libs/events/src/$1',
++    '^@app/dto$': '<rootDir>/libs/dto/src',
++    '^@app/dto/(.*)$': '<rootDir>/libs/dto/src/$1',
++    '^@app/utils$': '<rootDir>/libs/utils/src',
++    '^@app/utils/(.*)$': '<rootDir>/libs/utils/src/$1',
++    '^@app/common$': '<rootDir>/libs/common/src',
++    '^@app/common/(.*)$': '<rootDir>/libs/common/src/$1',
++    '^@app/observability$': '<rootDir>/libs/observability/src',
++    '^@app/observability/(.*)$': '<rootDir>/libs/observability/src/$1',
++  },
++};
++
++export default config;
++```
++
++- [ ] **Step 13: Create tsconfig.spec.json**
++
++`apps/api-gateway/tsconfig.spec.json`:
++```json
++{
++  "extends": "./tsconfig.app.json",
++  "include": ["**/*.spec.ts", "**/*.test.ts", "test/**/*.ts"]
++}
++```
++
++- [ ] **Step 14: Verify build**
++
++Run:
++```bash
++pnpm build
++```
++Expected: Compiles successfully, dist/created
++
++- [ ] **Step 15: Run tests**
++
++Run:
++```bash
++pnpm test
++```
++Expected: All tests pass
++
++- [ ] **Step 16: Commit**
++
++```bash
++git add -A
++git commit -m "feat(api-gateway): add main application with swagger, health, and metrics"
++```
++
++---
++
++### Task 10: Placeholder Services
++
++**Files:**
++- Create: For each of 9 services, same structure:
++  - `apps/<service>/src/main.ts`
++  - `apps/<service>/src/app.module.ts`
++  - `apps/<service>/src/health/health.controller.ts`
++  - `apps/<service>/src/health/health.service.ts`
++  - `apps/<service>/src/health/health.module.ts`
++  - `apps/<service>/tsconfig.app.json`
++  - `apps/<service>/package.json`
++  - `apps/<service>/Dockerfile`
++  - `apps/<service>/README.md`
++
++**Services:** notification-service, email-service, push-service, sms-service, websocket-service, scheduler-service, worker-service, template-service, user-preference-service
++
++**Interfaces:**
++- Consumes: Nothing (standalone placeholders)
++- Produces: 9 NestJS application scaffolds that build and compile
++
++- [ ] **Step 1: Create service template files**
++
++For each service, create the same template. Example for `notification-service`:
++
++Create `apps/notification-service/package.json`:
++```json
++{
++  "name": "notification-service",
++  "version": "0.1.0",
++  "private": true,
++  "scripts": {
++    "start": "nest start notification-service",
++    "start:dev": "nest start notification-service --watch",
++    "start:prod": "node dist/apps/notification-service/main"
++  }
++}
++```
++
++Create `apps/notification-service/tsconfig.app.json`:
++```json
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/apps/notification-service"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
++```
++
++- [ ] **Step 2: Create bootstrap for each service**
++
++Create `apps/notification-service/src/main.ts`:
++```typescript
++import { NestFactory } from '@nestjs/core';
++import { Logger } from '@nestjs/common';
++import { AppModule } from './app.module';
++
++async function bootstrap(): Promise<void> {
++  const app = await NestFactory.create(AppModule, { bufferLogs: true });
++  const logger = new Logger('NotificationService');
++  const port = process.env.PORT || 3001;
++  await app.listen(port);
++  logger.log(`Notification service running on port ${port}`);
++}
++
++void bootstrap();
++```
++
++- [ ] **Step 3: Create app module for each service**
++
++Create `apps/notification-service/src/app.module.ts`:
++```typescript
++import { Module } from '@nestjs/common';
++import { ConfigModule } from '@app/config';
++import { LoggerModule } from '@app/logger';
++import { DatabaseModule } from '@app/database';
++import { EventsModule } from '@app/events';
++import { ObservabilityModule } from '@app/observability';
++import { HealthModule } from './health/health.module';
++
++@Module({
++  imports: [
++    ConfigModule,
++    LoggerModule,
++    DatabaseModule,
++    EventsModule,
++    ObservabilityModule,
++    HealthModule,
++  ],
++})
++export class AppModule {}
++```
++
++- [ ] **Step 4: Create health module for each service**
++
++Create `apps/notification-service/src/health/health.service.ts`:
++```typescript
++import { Injectable } from '@nestjs/common';
++
++@Injectable()
++export class HealthService {
++  check(): { service: string; status: string; timestamp: string } {
++    return {
++      service: 'notification-service',
++      status: 'ok',
++      timestamp: new Date().toISOString(),
++    };
++  }
++}
++```
++
++Create `apps/notification-service/src/health/health.controller.ts`:
++```typescript
++import { Controller, Get } from '@nestjs/common';
++import { HealthService } from './health.service';
++
++@Controller('health')
++export class HealthController {
++  constructor(private readonly healthService: HealthService) {}
++
++  @Get()
++  check() {
++    return this.healthService.check();
++  }
++}
++```
++
++Create `apps/notification-service/src/health/health.module.ts`:
++```typescript
++import { Module } from '@nestjs/common';
++import { HealthController } from './health.controller';
++import { HealthService } from './health.service';
++
++@Module({
++  controllers: [HealthController],
++  providers: [HealthService],
++})
++export class HealthModule {}
++```
++
++- [ ] **Step 5: Create Dockerfile for each service**
++
++`apps/notification-service/Dockerfile`:
++```dockerfile
++FROM node:24-alpine AS builder
++WORKDIR /app
++RUN npm install -g pnpm
++COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
++COPY apps/notification-service/package.json ./apps/notification-service/
++COPY libs/ ./libs/
++RUN pnpm install --frozen-lockfile
++COPY . .
++RUN pnpm build
++
++FROM node:24-alpine AS runner
++WORKDIR /app
++RUN npm install -g pnpm
++COPY --from=builder /app/dist ./dist
++COPY --from=builder /app/node_modules ./node_modules
++EXPOSE 3001
++CMD ["node", "dist/apps/notification-service/main"]
++```
++
++- [ ] **Step 6: Create README for each service**
++
++`apps/notification-service/README.md`:
++```markdown
++# Notification Service
++
++Core orchestration service for the notification platform.
++
++## Planned Responsibilities
++
++- Notification delivery orchestration
++- Template rendering
++- De-duplication
++- Channel routing
++- Retry logic
++
++## Status
++
++🚧 Placeholder — implementation planned for Day 2+
++```
++
++- [ ] **Step 7: Create test dir for each service**
++
++Run:
++```bash
++for service in notification-service email-service push-service sms-service websocket-service scheduler-service worker-service template-service user-preference-service; do
++  mkdir -p "apps/$service/src/health" "apps/$service/test"
++done
++```
++
++- [ ] **Step 8: Repeat for all 9 services**
++
++Copy the same structure for each service, changing:
++- port numbers: 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009
++- service name in health service
++- dockerfile paths
++
++- [ ] **Step 9: Verify build**
++
++Run:
++```bash
++pnpm build
++```
++Expected: All apps and libs compile without errors
++
++- [ ] **Step 10: Commit**
++
++```bash
++git add -A
++git commit -m "feat(services): add placeholder services for all future microservices"
++```
++
++---
++
++### Task 11: Docker Compose & Infrastructure
++
++**Files:**
++- Create: `docker/docker-compose.yml`
++- Create: `docker/prometheus/prometheus.yml`
++- Create: `docker/grafana/datasources.yml`
++- Create: `docker/grafana/dashboards/default.json`
++- Create: `docker/localstack/init-sns-sqs.sh`
++
++**Interfaces:**
++- Consumes: Task 9, Task 10 (Dockerfiles)
++- Produces: Complete local development infrastructure
++
++- [ ] **Step 1: Create docker-compose.yml**
++
++Create `docker/docker-compose.yml`:
++```yaml
++version: "3.9"
++
++networks:
++  notification-network:
++    driver: bridge
++
++volumes:
++  postgres-data:
++  redis-data:
++  rabbitmq-data:
++  localstack-data:
++  prometheus-data:
++  grafana-data:
++  jaeger-data:
++
++services:
++  postgres:
++    image: postgres:16-alpine
++    container_name: notification-postgres
++    restart: unless-stopped
++    environment:
++      POSTGRES_USER: notification
++      POSTGRES_PASSWORD: notification
++      POSTGRES_DB: notification_platform
++    ports:
++      - "5432:5432"
++    volumes:
++      - postgres-data:/var/lib/postgresql/data
++    networks:
++      - notification-network
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U notification"]
++      interval: 5s
++      timeout: 5s
++      retries: 5
++
++  redis:
++    image: redis:7-alpine
++    container_name: notification-redis
++    restart: unless-stopped
++    ports:
++      - "6379:6379"
++    volumes:
++      - redis-data:/data
++    networks:
++      - notification-network
++    healthcheck:
++      test: ["CMD", "redis-cli", "ping"]
++      interval: 5s
++      timeout: 5s
++      retries: 5
++
++  rabbitmq:
++    image: rabbitmq:4-management-alpine
++    container_name: notification-rabbitmq
++    restart: unless-stopped
++    ports:
++      - "5672:5672"
++      - "15672:15672"
++    volumes:
++      - rabbitmq-data:/var/lib/rabbitmq
++    networks:
++      - notification-network
++    healthcheck:
++      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
++      interval: 10s
++      timeout: 5s
++      retries: 5
++
++  localstack:
++    image: localstack/localstack:latest
++    container_name: notification-localstack
++    restart: unless-stopped
++    ports:
++      - "4566:4566"
++    environment:
++      SERVICES: sns,sqs
++      AWS_DEFAULT_REGION: us-east-1
++      AWS_ACCESS_KEY_ID: localstack
++      AWS_SECRET_ACCESS_KEY: localstack
++      EDGE_PORT: 4566
++    volumes:
++      - localstack-data:/var/lib/localstack
++      - ./localstack/init-sns-sqs.sh:/etc/localstack/init/ready.d/init-sns-sqs.sh
++    networks:
++      - notification-network
++
++  prometheus:
++    image: prom/prometheus:latest
++    container_name: notification-prometheus
++    restart: unless-stopped
++    ports:
++      - "9090:9090"
++    volumes:
++      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
++      - prometheus-data:/prometheus
++    command:
++      - "--config.file=/etc/prometheus/prometheus.yml"
++      - "--storage.tsdb.path=/prometheus"
++    networks:
++      - notification-network
++
++  grafana:
++    image: grafana/grafana:latest
++    container_name: notification-grafana
++    restart: unless-stopped
++    ports:
++      - "3000:3000"
++    environment:
++      GF_SECURITY_ADMIN_USER: admin
++      GF_SECURITY_ADMIN_PASSWORD: admin
++      GF_INSTALL_PLUGINS: ""
++    volumes:
++      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
++      - grafana-data:/var/lib/grafana
++    networks:
++      - notification-network
++
++  jaeger:
++    image: jaegertracing/all-in-one:latest
++    container_name: notification-jaeger
++    restart: unless-stopped
++    ports:
++      - "16686:16686"
++      - "4317:4317"
++      - "4318:4318"
++      - "4318:4318"
++    environment:
++      COLLECTOR_OTLP_ENABLED: "true"
++    volumes:
++      - jaeger-data:/data
++    networks:
++      - notification-network
++
++  mailhog:
++    image: mailhog/mailhog:latest
++    container_name: notification-mailhog
++    restart: unless-stopped
++    ports:
++      - "1025:1025"
++      - "8025:8025"
++    networks:
++      - notification-network
++
++  adminer:
++    image: adminer:latest
++    container_name: notification-adminer
++    restart: unless-stopped
++    ports:
++      - "8080:8080"
++    networks:
++      - notification-network
++```
++
++- [ ] **Step 2: Create prometheus config**
++
++Create `docker/prometheus/prometheus.yml`:
++```yaml
++global:
++  scrape_interval: 15s
++  evaluation_interval: 15s
++
++scrape_configs:
++  - job_name: "api-gateway"
++    static_configs:
++      - targets: ["host.docker.internal:3000"]
++    metrics_path: /metrics
++```
++
++- [ ] **Step 3: Create grafana datasources**
++
++Create `docker/grafana/datasources.yml`:
++```yaml
++apiVersion: 1
++
++datasources:
++  - name: Prometheus
++    type: prometheus
++    access: proxy
++    url: http://prometheus:9090
++    isDefault: true
++  - name: Jaeger
++    type: jaeger
++    access: proxy
++    url: http://jaeger:16686
++```
++
++- [ ] **Step 4: Create LocalStack init script**
++
++Create `docker/localstack/init-sns-sqs.sh`:
++```bash
++#!/bin/bash
++# Initialize LocalStack with SNS topics and SQS queues
++# This script runs when LocalStack starts
++
++echo "Initializing LocalStack SNS/SQS..."
++
++# Create SNS topics
++awslocal sns create-topic --name notification-events
++awslocal sns create-topic --name email-events
++awslocal sns create-topic --name push-events
++awslocal sns create-topic --name sms-events
++
++# Create SQS queues
++awslocal sqs create-queue --queue-name notification-queue
++awslocal sqs create-queue --queue-name email-queue
++awslocal sqs create-queue --queue-name push-queue
++awslocal sqs create-queue --queue-name sms-queue
++awslocal sqs create-queue --queue-name dead-letter-queue
++
++echo "LocalStack initialization complete!"
++```
++
++Make it executable:
++```bash
++chmod +x docker/localstack/init-sns-sqs.sh
++```
++
++- [ ] **Step 5: Create additional Dockerfiles for services**
++
++`docker/Dockerfile.api-gateway` (or keep per-service Dockerfiles in apps/)
++
++- [ ] **Step 6: Test compose**
++
++Run:
++```bash
++docker compose -f docker/docker-compose.yml config
++```
++Expected: Compose file is valid
++
++- [ ] **Step 7: Commit**
++
++```bash
++git add -A
++git commit -m "feat(docker): add docker compose with all infrastructure services"
++```
++
++---
++
++### Task 12: Environment Files
++
++**Files:**
++- Create: `.env.example`
++- Create: `.env.development`
++- Create: `.env.production`
++
++**Interfaces:**
++- Consumes: Task 3 (env schema)
++- Produces: Environment configuration templates
++
++- [ ] **Step 1: Create .env.example**
++
++```
++# ─── Application ──────────────────────────────────────────
++NODE_ENV=development
++PORT=3000
++LOG_LEVEL=info
++
++# ─── Database ─────────────────────────────────────────────
++DATABASE_URL=postgresql://notification:notification@localhost:5432/notification_platform
++
++# ─── Redis ────────────────────────────────────────────────
++REDIS_URL=redis://localhost:6379
++
++# ─── RabbitMQ ─────────────────────────────────────────────
++RABBITMQ_URL=amqp://guest:guest@localhost:5672
++
++# ─── AWS / LocalStack ─────────────────────────────────────
++AWS_ACCESS_KEY=localstack
++AWS_SECRET_KEY=localstack
++AWS_REGION=us-east-1
++SNS_ENDPOINT=http://localhost:4566
++SQS_ENDPOINT=http://localhost:4566
++
++# ─── OpenTelemetry ────────────────────────────────────────
++OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
++OTEL_SERVICE_NAME=notification-platform
++
++# ─── Prometheus ───────────────────────────────────────────
++PROMETHEUS_METRICS_PATH=/metrics
++```
++
++- [ ] **Step 2: Create .env.development**
++
++```
++NODE_ENV=development
++PORT=3000
++LOG_LEVEL=debug
++DATABASE_URL=postgresql://notification:notification@localhost:5432/notification_platform
++REDIS_URL=redis://localhost:6379
++RABBITMQ_URL=amqp://guest:guest@localhost:5672
++AWS_ACCESS_KEY=localstack
++AWS_SECRET_KEY=localstack
++AWS_REGION=us-east-1
++SNS_ENDPOINT=http://localhost:4566
++SQS_ENDPOINT=http://localhost:4566
++OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
++OTEL_SERVICE_NAME=notification-platform-dev
++PROMETHEUS_METRICS_PATH=/metrics
++```
++
++- [ ] **Step 3: Create .env.production**
++
++```
++NODE_ENV=production
++PORT=3000
++LOG_LEVEL=info
++DATABASE_URL=postgresql://notification:notification@localhost:5432/notification_platform
++REDIS_URL=redis://localhost:6379
++RABBITMQ_URL=amqp://guest:guest@localhost:5672
++AWS_ACCESS_KEY=your-aws-access-key
++AWS_SECRET_KEY=your-aws-secret-key
++AWS_REGION=us-east-1
++OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
++OTEL_SERVICE_NAME=notification-platform
++PROMETHEUS_METRICS_PATH=/metrics
++```
++
++- [ ] **Step 4: Commit**
++
++```bash
++git add -A
++git commit -m "chore: add environment configuration files"
++```
++
++---
++
++### Task 13: Code Quality Tools
++
++**Files:**
++- Create: `.eslintrc.js`
++- Create: `.prettierrc`
++- Create: `.lintstagedrc.js`
++- Create: `.husky/pre-commit`
++
++**Interfaces:**
++- Consumes: Task 2 (eslint, prettier, husky)
++- Produces: Automated code quality enforcement
++
++- [ ] **Step 1: Create ESLint config**
++
++Create `.eslintrc.js`:
++```javascript
++module.exports = {
++  parser: '@typescript-eslint/parser',
++  parserOptions: {
++    project: 'tsconfig.json',
++    tsconfigRootDir: __dirname,
++    sourceType: 'module',
++  },
++  plugins: ['@typescript-eslint/eslint-plugin'],
++  extends: [
++    'plugin:@typescript-eslint/recommended',
++    'plugin:prettier/recommended',
++  ],
++  root: true,
++  env: {
++    node: true,
++    jest: true,
++  },
++  ignorePatterns: ['.eslintrc.js', 'jest.config.ts', 'dist'],
++  rules: {
++    '@typescript-eslint/no-explicit-any': 'error',
++    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
++    '@typescript-eslint/explicit-function-return-type': 'error',
++    '@typescript-eslint/no-non-null-assertion': 'error',
++    'no-console': 'warn',
++    'prefer-const': 'error',
++    'no-duplicate-imports': 'error',
++  },
++};
++```
++
++- [ ] **Step 2: Create Prettier config**
++
++Create `.prettierrc`:
++```json
++{
++  "singleQuote": true,
++  "trailingComma": "all",
++  "printWidth": 120,
++  "tabWidth": 2,
++  "semi": true,
++  "bracketSpacing": true,
++  "arrowParens": "always",
++  "endOfLine": "lf"
++}
++```
++
++- [ ] **Step 3: Create lint-staged config**
++
++Create `.lintstagedrc.js`:
++```javascript
++module.exports = {
++  '*.ts': ['eslint --fix', 'prettier --write'],
++};
++```
++
++- [ ] **Step 4: Configure Husky**
++
++Run:
++```bash
++pnpm husky init
++```
++
++Create `.husky/pre-commit`:
++```bash
++#!/usr/bin/env sh
++. "$(dirname -- "$0")/_/husky.sh"
++
++pnpm lint-staged
++pnpm test -- --bail --findRelatedTests
++```
++
++Make it executable:
++```bash
++chmod +x .husky/pre-commit
++```
++
++- [ ] **Step 5: Verify lint**
++
++Run:
++```bash
++pnpm lint
++```
++Expected: No lint errors
++
++- [ ] **Step 6: Commit**
++
++```bash
++git add -A
++git commit -m "chore: add eslint, prettier, husky, and lint-staged configuration"
++```
++
++---
++
++### Task 14: CI Pipeline
++
++**Files:**
++- Create: `.github/workflows/ci.yml`
++
++**Interfaces:**
++- Consumes: All tasks above
++- Produces: GitHub Actions CI
++
++- [ ] **Step 1: Create CI workflow**
++
++Create `.github/workflows/ci.yml`:
++```yaml
++name: CI
++
++on:
++  push:
++    branches: [main, develop]
++  pull_request:
++    branches: [main]
++
++concurrency:
++  group: ${{ github.workflow }}-${{ github.ref }}
++  cancel-in-progress: true
++
++jobs:
++  quality:
++    name: Quality Check
++    runs-on: ubuntu-latest
++    timeout-minutes: 15
++
++    services:
++      postgres:
++        image: postgres:16-alpine
++        env:
++          POSTGRES_USER: notification
++          POSTGRES_PASSWORD: notification
++          POSTGRES_DB: notification_platform
++        ports:
++          - 5432:5432
++        options: >-
++          --health-cmd pg_isready
++          --health-interval 10s
++          --health-timeout 5s
++          --health-retries 5
++
++      redis:
++        image: redis:7-alpine
++        ports:
++          - 6379:6379
++        options: >-
++          --health-cmd "redis-cli ping"
++          --health-interval 10s
++          --health-timeout 5s
++          --health-retries 5
++
++      rabbitmq:
++        image: rabbitmq:4-alpine
++        ports:
++          - 5672:5672
++        options: >-
++          --health-cmd "rabbitmq-diagnostics check_port_connectivity"
++          --health-interval 10s
++          --health-timeout 5s
++          --health-retries 5
++
++    steps:
++      - uses: actions/checkout@v4
++
++      - uses: pnpm/action-setup@v4
++        with:
++          version: 11
++
++      - uses: actions/setup-node@v4
++        with:
++          node-version: 24
++          cache: pnpm
++
++      - name: Install dependencies
++        run: pnpm install --frozen-lockfile
++
++      - name: Generate Prisma client
++        run: pnpm prisma generate
++
++      - name: Lint
++        run: pnpm lint
++
++      - name: Build
++        run: pnpm build
++
++      - name: Test
++        run: pnpm test
++        env:
++          DATABASE_URL: postgresql://notification:notification@localhost:5432/notification_platform
++          REDIS_URL: redis://localhost:6379
++          RABBITMQ_URL: amqp://guest:guest@localhost:5672
++          AWS_ACCESS_KEY: test
++          AWS_SECRET_KEY: test
++          AWS_REGION: us-east-1
++          LOG_LEVEL: silent
++```
++
++- [ ] **Step 2: Commit**
++
++```bash
++git add -A
++git commit -m "ci: add github actions workflow with lint, build, and test"
++```
++
++---
++
++### Task 15: Documentation
++
++**Files:**
++- Create: `README.md`
++- Create: `ROADMAP.md`
++- Create: `docs/architecture.md`
++- Create: `docs/adr/ADR-001-nestjs.md`
++- Create: `docs/adr/ADR-002-prisma.md`
++- Create: `docs/adr/ADR-003-rabbitmq.md`
++- Create: `docs/adr/ADR-004-opentelemetry.md`
++- Create: `docs/diagrams/system-context.mermaid`
++- Create: `docs/diagrams/container.mermaid`
++- Create: `docs/diagrams/notification-flow.mermaid`
++- Create: `docs/diagrams/deployment.mermaid`
++- Create: Service READMEs (if not already created in Task 10)
++
++**Interfaces:**
++- Consumes: All tasks above
++- Produces: Complete documentation
++
++- [ ] **Step 1: Create README.md**
++
++```markdown
++# Notification Platform
++
++A production-grade notification platform built with NestJS, designed to serve millions of notifications across email, push, SMS, and WebSocket channels.
++
++> **Status:** Day 1 — Foundation scaffolding complete. Core services under active development.
++
++## Architecture
++
++```
++┌─────────────┐     ┌──────────────────┐     ┌────────────────┐
++│  API Gateway │────▶│ Notification Svc │────▶│  Email Service  │
++│  (NestJS)    │     │  (Orchestrator)  │     │  (NestJS)       │
++└─────────────┘     └──────────────────┘     └────────────────┘
++                          │                           │
++                          ▼                           ▼
++                    ┌──────────┐              ┌──────────┐
++                    │ RabbitMQ │              │   AWS    │
++                    │   Event  │              │  SNS/SQS │
++                    │   Bus    │              │          │
++                    └──────────┘              └──────────┘
++                          │
++                          ▼
++                    ┌──────────┐
++                    │  Worker  │
++                    │  Service │
++                    │  (Retry) │
++                    └──────────┘
++```
++
++## Tech Stack
++
++| Category          | Technology                          |
++|-------------------|-------------------------------------|
++| Framework         | NestJS                              |
++| Language          | TypeScript (strict)                 |
++| Database          | PostgreSQL via Prisma ORM           |
++| Cache             | Redis                               |
++| Message Broker    | RabbitMQ                            |
++| Cloud Emulation   | LocalStack (SNS/SQS)                |
++| Logging           | Pino                                |
++| Tracing           | OpenTelemetry + Jaeger              |
++| Metrics           | Prometheus + Grafana                |
++| Validation        | Zod                                 |
++| Containerization  | Docker + Docker Compose             |
++
++## Quick Start
++
++```bash
++# Prerequisites: Node.js 24+, pnpm 11+, Docker
++
++# Clone and install
++git clone <repo-url> notification-platform
++cd notification-platform
++pnpm install
++
++# Generate Prisma client
++pnpm prisma generate
++
++# Start infrastructure
++pnpm docker:up
++
++# Start API Gateway
++pnpm start:api-gateway
++```
++
++## Services & Ports
++
++| Service                | Port  |
++|------------------------|-------|
++| API Gateway            | 3000  |
++| Notification Service   | 3001  |
++| Email Service          | 3002  |
++| Push Service           | 3003  |
++| SMS Service            | 3004  |
++| WebSocket Service      | 3005  |
++| Scheduler Service      | 3006  |
++| Worker Service         | 3007  |
++| Template Service       | 3008  |
++| User Preference Svc    | 3009  |
++
++## Infrastructure Ports
++
++| Service     | Port  | Access                        |
++|-------------|-------|-------------------------------|
++| PostgreSQL  | 5432  | `psql -U notification`        |
++| Redis       | 6379  | `redis-cli`                   |
++| RabbitMQ    | 5672  | Management: http://localhost:15672 |
++| LocalStack  | 4566  | AWS SDK endpoint              |
++| Prometheus  | 9090  | http://localhost:9090         |
++| Grafana     | 3000  | admin/admin                   |
++| Jaeger      | 16686 | http://localhost:16686        |
++| Mailhog     | 8025  | http://localhost:8025         |
++| Adminer     | 8080  | http://localhost:8080         |
++
++## Development
++
++```bash
++# Build all
++pnpm build
++
++# Run tests
++pnpm test
++
++# Lint & format
++pnpm lint
++pnpm format
++
++# Docker
++pnpm docker:up    # Start all services
++pnpm docker:down  # Stop all services
++```
++
++## License
++
++MIT
++```
++
++- [ ] **Step 2: Create ROADMAP.md**
++
++```markdown
++# Roadmap
++
++## Day 1 — Foundation ✅
++- [x] NestJS monorepo scaffolding
++- [x] Docker Compose infrastructure
++- [x] Shared libraries (config, database, events, logger, observability)
++- [x] API Gateway with Swagger, health, metrics
++- [x] Placeholder microservices
++- [x] CI pipeline + code quality tools
++- [x] Documentation
++
++## Day 2 — Notification Service
++- [ ] Notification data model (Prisma schema)
++- [ ] Create and store notifications
++- [ ] Notification status tracking
++- [ ] API endpoints for notification CRUD
++- [ ] Notification repository pattern
++- [ ] Integration tests
++
++## Day 3 — Email Service
++- [ ] Email provider abstraction (SES/SendGrid)
++- [ ] Email template rendering
++- [ ] Email sending logic
++- [ ] Bounce handling
++- [ ] Mailhog integration for dev
++
++## Day 4 — Push Notifications
++- [ ] FCM integration
++- [ ] APNs integration
++- [ ] Push notification payload design
++- [ ] Device token management
++- [ ] Push notification service
++
++## Day 5 — SMS Service
++- [ ] Twilio integration
++- [ ] SMS provider abstraction
++- [ ] SMS sending logic
++- [ ] Delivery status callbacks
++
++## Day 6 — RabbitMQ Event Bus
++- [ ] Event-driven architecture
++- [ ] Exchange and queue setup
++- [ ] Event producers and consumers
++- [ ] Message serialization
++- [ ] Dead letter queues
++
++## Day 7 — WebSocket Service
++- [ ] Socket.IO gateway
++- [ ] Connection management
++- [ ] Room-based subscriptions
++- [ ] Real-time notification delivery
++- [ ] Authentication
++
++## Day 8 — SNS/SQS Integration
++- [ ] AWS SNS topic management
++- [ ] AWS SQS queue management
++- [ ] SNS→SQS subscription
++- [ ] LocalStack testing
++- [ ] Cloud deployment preparation
++
++## Day 9 — Scheduler Service
++- [ ] Cron-based scheduling
++- [ ] Delayed notifications
++- [ ] Recurring notifications
++- [ ] Scheduler persistence
++- [ ] Timezone handling
++
++## Day 10 — Worker & Retry Service
++- [ ] Retry worker with exponential backoff
++- [ ] Dead letter queue processor
++- [ ] Rate limiting
++- [ ] Batch processing
++- [ ] Worker health monitoring
++
++## Day 11 — Template Service
++- [ ] Notification template engine
++- [ ] Template CRUD APIs
++- [ ] Variable interpolation
++- [ ] Version management
++- [ ] Template preview
++
++## Day 12 — User Preferences
++- [ ] User notification preferences
++- [ ] Channel opt-in/out
++- [ ] Digest preferences
++- [ ] Quiet hours
++- [ ] Preference API
++
++## Day 13 — Analytics & Monitoring
++- [ ] Notification delivery tracking
++- [ ] Open/click tracking
++- [ ] Grafana dashboards
++- [ ] Alerting rules
++- [ ] Performance monitoring
++
++## Day 14 — Polish & Production Readiness
++- [ ] End-to-end tests
++- [ ] Load testing
++- [ ] Security audit
++- [ ] Rate limiting
++- [ ] API versioning
++- [ ] Production deployment guide
++```
++
++- [ ] **Step 3: Create architecture.md**
++
++`docs/architecture.md`:
++```markdown
++# Architecture Documentation
++
++## Why Microservices?
++
++The notification platform is designed as a set of microservices for several reasons:
++
++1. **Independent scaling**: Email sending has different resource requirements than WebSocket connections
++2. **Isolated failures**: A bug in the SMS service shouldn't bring down email delivery
++3. **Team scalability**: Different teams can own different notification channels
++4. **Technology flexibility**: Each service can use the best tool for its job
++5. **Deployment independence**: Channel-specific deployments without redeploying the entire platform
++
++## Why RabbitMQ?
++
++RabbitMQ serves as the central event bus for the platform:
++
++- **Guaranteed delivery**: Messages persist until consumed, surviving service restarts
++- **Flexible routing**: Direct, topic, fanout, and header exchanges for different notification patterns
++- **Dead letter queues**: Failed messages automatically route to DLQ for later analysis
++- **Consumer acknowledgments**: Ensure messages are processed completely before removal
++- **Mature ecosystem**: Well-tested, production-proven message broker
++
++## Why SNS/SQS?
++
++AWS SNS and SQS provide the cloud-native notification delivery layer:
++
++- **SNS**: Fan-out notifications to multiple subscribers (email, SMS, push)
++- **SQS**: Buffered, reliable queue for asynchronous processing
++- **DLQ support**: Messages that fail after retries are captured
++- **Cloud integration**: Direct integration with AWS Lambda, SES, and other services
++- **LocalStack**: Fully emulated locally for development
++
++## Why Redis?
++
++Redis serves multiple purposes:
++
++- **Caching**: Frequently accessed templates and user preferences
++- **Rate limiting**: Distributed rate limiting across service instances
++- **Session store**: WebSocket session management
++- **Pub/Sub**: Real-time notification delivery (complementing WebSockets)
++- **Leaderboard/analytics**: Real-time notification metrics
++
++## Why PostgreSQL?
++
++PostgreSQL is the primary data store:
++
++- **Relational integrity**: Notifications, templates, and user preferences have well-defined relationships
++- **JSONB support**: Flexible schema for notification payloads and metadata
++- **ACID compliance**: Critical for delivery tracking and status management
++- **Full-text search**: Search through notification history
++- **Mature ecosystem**: Prisma ORM provides type-safe database access
++
++## Why WebSockets?
++
++WebSockets provide real-time notification delivery:
++
++- **Instant delivery**: No polling, no latency
++- **Bidirectional communication**: Client can acknowledge receipt
++- **Connection management**: Track active connections for presence
++- **Fallback**: Socket.IO provides HTTP long-polling fallback
++- **Scalable**: Redis adapter for multi-instance WebSocket servers
++
++## Why OpenTelemetry?
++
++OpenTelemetry provides observability across the distributed system:
++
++- **Distributed tracing**: Track a notification through API Gateway → queue → worker → email service
++- **Vendor-neutral**: Export to Jaeger, Zipkin, or any OTLP-compatible backend
++- **Auto-instrumentation**: HTTP, gRPC, and database calls automatically traced
++- **Context propagation**: Trace IDs propagated through RabbitMQ messages
++- **Standardized**: Industry standard for observability
++
++## Why Prometheus?
++
++Prometheus is the metrics backbone:
++
++- **Pull-based metrics**: Services expose /metrics, Prometheus scrapes them
++- **Alerting**: Integrated Alertmanager for notification failure alerts
++- **Grafana dashboards**: Rich visualization of notification throughput, latency, errors
++- **Rate calculation**: PromQL for calculating notification rates, error rates, percentiles
++- **Service discovery**: Kubernetes and Docker Compose auto-discovery
++```
++
++- [ ] **Step 4: Create ADR-001**
++
++`docs/adr/ADR-001-nestjs.md`:
++```markdown
++# ADR-001: Why NestJS
++
++## Status
++Accepted
++
++## Context
++We need a Node.js framework for building a production-grade notification platform. The framework must support TypeScript, dependency injection, modular architecture, and enterprise patterns.
++
++## Decision
++Use NestJS as the application framework.
++
++## Rationale
++- **Modular architecture**: NestJS modules map directly to our service boundaries
++- **Dependency injection**: Built-in DI container promotes testability and SOLID principles
++- **Monorepo support**: Native monorepo mode with apps and libraries
++- **Decorator-based**: Clean controller, service, and module definitions
++- **Ecosystem**: Terminus, OpenTelemetry, Swagger integrations are first-class
++- **Testing**: NestJS testing utilities simplify unit and integration tests
++- **TypeScript-first**: Full TypeScript support with strict mode from day one
++
++## Consequences
++- Services are coupled to NestJS-specific APIs
++- Learning curve for developers unfamiliar with Angular-style DI
++- Build toolchain (SWC/Webpack) adds complexity
++```
++
++- [ ] **Step 5: Create ADR-002**
++
++`docs/adr/ADR-002-prisma.md`:
++```markdown
++# ADR-002: Why Prisma
++
++## Status
++Accepted
++
++## Context
++We need an ORM for PostgreSQL that provides type safety, migration management, and excellent developer experience.
++
++## Decision
++Use Prisma ORM.
++
++## Rationale
++- **Type safety**: Generated types match the database schema exactly
++- **Migration management**: Declarative schema → auto-generated migrations
++- **Studio**: Built-in GUI for data exploration during development
++- **Performance**: Efficient query generation with relation loading strategies
++- **Ecosystem**: Well-maintained with active community
++- **Migrations**: Safe, reversible migration workflow
++
++## Consequences
++- Additional build step (prisma generate)
++- Complex queries may require raw SQL
++- Migration conflicts need manual resolution in team settings
++```
++
++- [ ] **Step 6: Create ADR-003**
++
++`docs/adr/ADR-003-rabbitmq.md`:
++```markdown
++# ADR-003: Why RabbitMQ
++
++## Status
++Accepted
++
++## Context
++We need a message broker for asynchronous communication between microservices. The broker must support persistent messages, flexible routing, and dead letter queues.
++
++## Decision
++Use RabbitMQ as the message broker.
++
++## Rationale
++- **Persistent messages**: Survives broker restarts
++- **Flexible routing**: Direct, topic, fanout, header exchanges
++- **Dead letter queues**: Automatic DLQ for failed messages
++- **Consumer acknowledgments**: at-least-once delivery semantics
++- **Management UI**: Built-in monitoring and management
++- **Protocol**: AMQP 0-9-1 is a mature, well-documented protocol
++- **Performance**: Handles tens of thousands of messages per second
++
++## Consequences
++- Stateful broker requires careful operational management
++- Message ordering not guaranteed across queues
++- AMQP adds protocol overhead compared to in-process communication
++```
++
++- [ ] **Step 7: Create ADR-004**
++
++`docs/adr/ADR-004-opentelemetry.md`:
++```markdown
++# ADR-004: Why OpenTelemetry
++
++## Status
++Accepted
++
++## Context
++We need distributed tracing across multiple microservices to debug and monitor notification delivery flows.
++
++## Decision
++Use OpenTelemetry for distributed tracing.
++
++## Rationale
++- **Standard**: CNCF incubating project, industry standard for observability
++- **Auto-instrumentation**: Automatic tracing of HTTP, gRPC, database calls
++- **Vendor-neutral**: Export to Jaeger, Zipkin, Datadog, or any OTLP backend
++- **Context propagation**: Trace context propagates through RabbitMQ headers
++- **NestJS integration**: First-class support via @opentelemetry/instrumentation-express
++
++## Consequences
++- Performance overhead from instrumentation (minimal)
++- Complex configuration for advanced sampling strategies
++- Requires OTLP-compatible backend (Jaeger in development)
++```
++
++- [ ] **Step 8: Create Mermaid diagrams**
++
++`docs/diagrams/system-context.mermaid`:
++```mermaid
++graph TB
++    User["👤 User"]
++    Admin["👤 Admin"]
++    ExternalSystem["🌐 External Systems<br/>(SES, SendGrid, FCM, APNs, Twilio)"]
++
++    subgraph "Notification Platform"
++        APIGateway["API Gateway"]
++        NotificationService["Notification Service"]
++        EmailService["Email Service"]
++        PushService["Push Service"]
++        SMSService["SMS Service"]
++        WebSocketService["WebSocket Service"]
++        SchedulerService["Scheduler Service"]
++        WorkerService["Worker Service"]
++        TemplateService["Template Service"]
++        PreferenceService["User Preference Service"]
++    end
++
++    User --> APIGateway
++    Admin --> APIGateway
++    APIGateway --> NotificationService
++    NotificationService --> EmailService
++    NotificationService --> PushService
++    NotificationService --> SMSService
++    NotificationService --> WebSocketService
++    EmailService --> ExternalSystem
++    PushService --> ExternalSystem
++    SMSService --> ExternalSystem
++    SchedulerService --> NotificationService
++    WorkerService --> NotificationService
++    TemplateService --> NotificationService
++    PreferenceService --> NotificationService
++```
++
++`docs/diagrams/container.mermaid`:
++```mermaid
++graph TB
++    subgraph "Infrastructure"
++        PostgreSQL[("PostgreSQL")]
++        Redis[("Redis")]
++        RabbitMQ[("RabbitMQ")]
++        LocalStack[("LocalStack<br/>SNS/SQS")]
++    end
++
++    subgraph "Monitoring"
++        Prometheus[("Prometheus")]
++        Grafana[("Grafana")]
++        Jaeger[("Jaeger")]
++    end
++
++    subgraph "Applications"
++        APIGateway["API Gateway<br/>NestJS"]
++        NotificationService["Notification Service<br/>NestJS"]
++        EmailService["Email Service<br/>NestJS"]
++    end
++
++    APIGateway --> PostgreSQL
++    APIGateway --> Redis
++    NotificationService --> RabbitMQ
++    NotificationService --> PostgreSQL
++    EmailService --> RabbitMQ
++    EmailService --> LocalStack
++
++    APIGateway -.-> Prometheus
++    NotificationService -.-> Prometheus
++    EmailService -.-> Prometheus
++
++    APIGateway -.-> Jaeger
++    NotificationService -.-> Jaeger
++    EmailService -.-> Jaeger
++
++    Prometheus -.-> Grafana
++```
++
++`docs/diagrams/notification-flow.mermaid`:
++```mermaid
++sequenceDiagram
++    participant C as Client
++    participant AG as API Gateway
++    participant NS as Notification Service
++    participant RMQ as RabbitMQ
++    participant ES as Email Service
++    participant AWS as AWS SNS/SQS
++    participant W as Worker
++
++    C->>AG: POST /notifications
++    AG->>NS: Forward request
++    NS->>NS: Validate & enrich
++    NS->>RMQ: Publish notification event
++    NS-->>C: 202 Accepted
++
++    RMQ->>ES: Deliver to email queue
++    ES->>ES: Render template
++    ES->>AWS: Publish to SNS topic
++    AWS->>AWS: Deliver to SQS queue
++
++    alt Success
++        AWS-->>ES: Delivery confirmed
++        ES->>RMQ: Publish delivery event
++    else Failure
++        AWS-->>ES: Delivery failed
++        ES->>RMQ: Publish failure event
++        RMQ->>W: Route to retry queue
++        W->>W: Exponential backoff
++        W->>AWS: Retry send
++    end
++```
++
++`docs/diagrams/deployment.mermaid`:
++```mermaid
++graph TB
++    subgraph "Production Environment"
++        subgraph "ECS / Kubernetes Cluster"
++            AG["API Gateway<br/>2+ replicas"]
++            NS["Notification Svc<br/>2+ replicas"]
++            ES["Email Svc<br/>2+ replicas"]
++            PS["Push Svc<br/>2+ replicas"]
++            SS["SMS Svc<br/>2+ replicas"]
++            WS["WebSocket Svc<br/>2+ replicas"]
++        end
++
++        subgraph "AWS Managed"
++            RDS[("RDS PostgreSQL<br/>Multi-AZ")]
++            ElastiCache[("ElastiCache Redis<br/>Cluster")]
++            MQ[("Amazon MQ<br/>RabbitMQ")]
++            SNS["SNS Topics"]
++            SQS["SQS Queues"]
++            DLQ["Dead Letter Queues"]
++        end
++
++        subgraph "Observability"
++            AMP["AMP<br/>Prometheus"]
++            AMG["AMG<br/>Grafana"]
++            XR["AWS X-Ray<br/>Tracing"]
++        end
++
++        AG --> RDS
++        AG --> ElastiCache
++        NS --> MQ
++        NS --> RDS
++        ES --> SNS
++        ES --> SQS
++        SQS --> DLQ
++
++        AG -.-> AMP
++        NS -.-> AMP
++        ES -.-> AMP
++        PS -.-> AMP
++        SS -.-> AMP
++        WS -.-> AMP
++
++        AMP -.-> AMG
++    end
++
++    Internet["Internet"] --> AG
++    Internet --> WS
++```
++
++- [ ] **Step 9: Commit**
++
++```bash
++git add -A
++git commit -m "docs: add comprehensive documentation, adrs, and architecture diagrams"
++```
++
++---
++
++### Task 16: Final Verification
++
++**Files:**
++- Modify: none (verification only)
++
++- [ ] **Step 1: Run full build**
++
++```bash
++pnpm build
++```
++Expected: All apps and libs compile without errors
++
++- [ ] **Step 2: Run lint**
++
++```bash
++pnpm lint
++```
++Expected: All files pass lint, no errors or warnings
++
++- [ ] **Step 3: Run tests**
++
++```bash
++pnpm test
++```
++Expected: All tests pass
++
++- [ ] **Step 4: Run full pipeline**
++
++```bash
++pnpm build && pnpm lint && pnpm test
++```
++Expected: All three pass
++
++- [ ] **Step 5: Generate folder tree**
++
++```bash
++find . -type f -not -path './node_modules/*' -not -path './.git/*' -not -path './dist/*' -not -path './coverage/*' -not -path './.pnpm-store/*' -not -name 'pnpm-lock.yaml' | sort
++```
++
++- [ ] **Step 6: Final commit**
++
++```bash
++git add -A
++git commit -m "chore: day 1 foundation complete"
++```
+diff --git a/docs/superpowers/specs/2026-07-14-notification-platform-day1-design.md b/docs/superpowers/specs/2026-07-14-notification-platform-day1-design.md
+new file mode 100644
+index 0000000..7359b49
+--- /dev/null
++++ b/docs/superpowers/specs/2026-07-14-notification-platform-day1-design.md
+@@ -0,0 +1,217 @@
++# Notification Platform — Day 1 Foundation
++
++## Overview
++
++Build the project foundation for a production-grade notification platform. This is a NestJS monorepo serving as a portfolio project targeting senior backend engineering positions. Day 1 focuses exclusively on infrastructure scaffolding — no business logic, no notification sending.
++
++## Architecture
++
++- **Monorepo mode**: NestJS native monorepo with `nest-cli.json`
++- **Apps**: All service applications under `apps/`
++- **Libraries**: All shared modules under `libs/`, imported via `@app/<name>` path aliases
++- **Package manager**: pnpm with workspace support
++- **Language**: TypeScript (strict mode)
++
++### Folder Structure
++
++```
++notification-system/
++├── apps/
++│   ├── api-gateway/               # Day 1 active — health check entry point
++│   ├── notification-service/      # Placeholder
++│   ├── email-service/             # Placeholder
++│   ├── push-service/              # Placeholder
++│   ├── sms-service/               # Placeholder
++│   ├── websocket-service/         # Placeholder
++│   ├── scheduler-service/         # Placeholder
++│   ├── worker-service/            # Placeholder
++│   ├── template-service/          # Placeholder
++│   └── user-preference-service/   # Placeholder
++├── libs/
++│   ├── config/                    # Global ConfigModule (env validation via Zod)
++│   ├── database/                  # PrismaModule + RedisModule
++│   ├── logger/                    # Pino logger module
++│   ├── events/                    # RabbitMQ event bus module
++│   ├── dto/                       # Shared DTOs
++│   ├── utils/                     # Shared utilities
++│   ├── common/                    # Common decorators, guards, filters, interceptors
++│   └── observability/             # OpenTelemetry + Prometheus + Terminus health
++├── docker/
++│   ├── docker-compose.yml         # All infrastructure services
++│   └── Dockerfile.api-gateway     # API Gateway Dockerfile
++├── docs/
++│   ├── superpowers/specs/         # Design docs
++│   ├── architecture.md            # Architecture documentation
++│   ├── adr/                       # Architecture Decision Records
++│   └── diagrams/                  # Mermaid diagrams
++├── scripts/                       # Dev helper scripts
++├── .github/workflows/             # CI pipeline
++├── .husky/                        # Git hooks
++├── prisma/                        # Prisma schema (root level)
++│   └── schema.prisma             # Connection verification only (no tables)
++├── nest-cli.json
++├── pnpm-workspace.yaml
++├── package.json
++├── tsconfig.json
++├── tsconfig.build.json
++├── .eslintrc.js
++├── .prettierrc
++├── .lintstagedrc.js
++├── .env.example
++├── .env.development
++├── .env.production
++├── ROADMAP.md
++└── README.md
++```
++
++## Tech Stack
++
++| Component          | Technology                      |
++|--------------------|---------------------------------|
++| Runtime            | Node.js 24 LTS                  |
++| Framework          | NestJS                          |
++| Language           | TypeScript (strict)             |
++| Package Manager    | pnpm                            |
++| Database ORM       | Prisma                          |
++| Cache/Broker       | Redis                           |
++| Message Broker     | RabbitMQ                        |
++| Validation         | Zod                             |
++| Logging            | Pino                            |
++| Tracing            | OpenTelemetry + Jaeger exporter |
++| Metrics            | Prometheus client               |
++| Health Checks      | Terminus                        |
++| API Docs           | Swagger (OpenAPI 3.0)           |
++
++## Infrastructure (Docker Compose)
++
++| Service     | Image                        | Purpose                     |
++|-------------|------------------------------|-----------------------------|
++| PostgreSQL  | postgres:16-alpine           | Primary database            |
++| Redis       | redis:7-alpine               | Caching + pub/sub           |
++| RabbitMQ    | rabbitmq:4-management        | Message broker              |
++| LocalStack  | localstack/localstack        | AWS SNS/SQS emulation       |
++| Prometheus  | prom/prometheus              | Metrics collection          |
++| Grafana     | grafana/grafana              | Metrics visualization       |
++| Jaeger      | jaegertracing/all-in-one     | Distributed tracing         |
++| Mailhog     | mailhog/mailhog              | Email testing               |
++| Adminer     | adminer                      | Database management UI      |
++
++## Configuration
++
++- **ConfigModule** from `@app/config` loaded globally
++- Environment validation via Zod schema
++- Three environments: `development`, `staging`, `production`
++- `.env.example` documents all required variables
++- `.env.development` / `.env.production` provide defaults
++
++### Environment Variables
++
++```
++NODE_ENV=development
++PORT=3000
++DATABASE_URL=postgresql://user:password@localhost:5432/notification_platform
++REDIS_URL=redis://localhost:6379
++RABBITMQ_URL=amqp://guest:guest@localhost:5672
++AWS_ACCESS_KEY=localstack
++AWS_SECRET_KEY=localstack
++AWS_REGION=us-east-1
++SNS_ENDPOINT=http://localhost:4566
++SQS_ENDPOINT=http://localhost:4566
++LOG_LEVEL=info
++OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14250
++```
++
++## Day 1 — Active Components
++
++### API Gateway
++- NestJS application (`apps/api-gateway`)
++- Bootstrap with `NestFactory.create`
++- Swagger configuration at `/api/docs`
++- Prometheus metrics at `/metrics`
++- Terminus health at `/health`, `/live`, `/ready`
++- Pino HTTP logger with request ID, path, method, response time, status code
++- OpenTelemetry HTTP instrumentation
++
++### Shared Libraries (all functional Day 1)
++
++| Library        | Responsibility                        |
++|----------------|----------------------------------------|
++| `@app/config`  | Global ConfigModule with Zod env validation |
++| `@app/database`| PrismaModule (connection verification), RedisModule |
++| `@app/logger`  | Pino logger setup                      |
++| `@app/events`  | RabbitMQ client module (connection only) |
++| `@app/observability` | OpenTelemetry setup, Prometheus metrics, Terminus health |
++| `@app/common`  | Shared decorators, guards, interceptors |
++| `@app/utils`   | Shared utility functions               |
++| `@app/dto`     | Shared DTOs and interfaces             |
++
++### Placeholder Services (apps/*)
++Each has: `README.md`, `src/`, `test/`, `Dockerfile`, `package.json`, NestJS bootstrap, AppModule, HealthController, HealthService. All are pre-generated but not wired into the API Gateway.
++
++## Code Quality
++
++- **Strict TypeScript**: `strict: true` in tsconfig
++- **No `any`**: ESLint rule `@typescript-eslint/no-explicit-any: error`
++- **SOLID**: Single-responsibility modules, dependency injection
++- **Feature-first**: Each library owns its feature completely
++- **Husky**: pre-commit hook runs lint, format, test
++- **Lint-staged**: staged files only
++- **ESLint + Prettier**: consistent code style
++- **Conventional Commits**: commit message convention
++
++## CI Pipeline (GitHub Actions)
++
++```yaml
++name: CI
++on: [push, pull_request]
++jobs:
++  ci:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - uses: pnpm/action-setup@v4
++      - uses: actions/setup-node@v4
++        with:
++          node-version: 24
++          cache: pnpm
++      - run: pnpm install
++      - run: pnpm lint
++      - run: pnpm build
++      - run: pnpm test
++```
++
++## Documentation
++
++- `docs/architecture.md` — Full architecture explanation
++- `docs/adr/ADR-001-nestjs.md` through `ADR-004-opentelemetry.md`
++- `docs/diagrams/` — Mermaid diagrams (system context, container, deployment, notification flow)
++- `ROADMAP.md` — 14-day build plan
++
++## Future Services (Documented Only)
++
++Each future service has a placeholder directory with architecture notes in its README:
++
++- **notification-service**: Core orchestration, template rendering, de-duplication
++- **email-service**: SES/SendGrid integration, HTML email rendering
++- **push-service**: FCM/APNs integration
++- **sms-service**: Twilio integration
++- **websocket-service**: Socket.IO/WebSocket gateway
++- **scheduler-service**: Cron-based notification scheduling
++- **worker-service**: Retry workers, dead letter queue processing
++- **template-service**: Notification template management
++- **user-preference-service**: User opt-in/out, channel preferences
++- **analytics-service**: Delivery tracking, open rates, click rates
++
++## Acceptance Criteria
++
++1. Repository builds successfully (`pnpm build`)
++2. `docker compose up` starts all 10 infrastructure services
++3. Swagger UI accessible at `http://localhost:3000/api/docs`
++4. Health endpoint `GET /health` returns 200 with status
++5. Metrics endpoint `GET /metrics` returns Prometheus metrics
++6. OpenTelemetry traces exported to Jaeger
++7. Pino request logging works with correlation IDs
++8. CI pipeline passes (lint → build → test)
++9. ESLint passes with no errors
++10. Folder structure is clean and organized
++11. Documentation is production-quality
+diff --git a/libs/common/package.json b/libs/common/package.json
+new file mode 100644
+index 0000000..9942b42
+--- /dev/null
++++ b/libs/common/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/common",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/common/tsconfig.lib.json b/libs/common/tsconfig.lib.json
+new file mode 100644
+index 0000000..8fdbf52
+--- /dev/null
++++ b/libs/common/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/common"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/config/package.json b/libs/config/package.json
+new file mode 100644
+index 0000000..c4011f0
+--- /dev/null
++++ b/libs/config/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/config",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/config/tsconfig.lib.json b/libs/config/tsconfig.lib.json
+new file mode 100644
+index 0000000..ec3efa6
+--- /dev/null
++++ b/libs/config/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/config"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/database/package.json b/libs/database/package.json
+new file mode 100644
+index 0000000..ef87da0
+--- /dev/null
++++ b/libs/database/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/database",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/database/tsconfig.lib.json b/libs/database/tsconfig.lib.json
+new file mode 100644
+index 0000000..21c8d58
+--- /dev/null
++++ b/libs/database/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/database"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/dto/package.json b/libs/dto/package.json
+new file mode 100644
+index 0000000..5f247d8
+--- /dev/null
++++ b/libs/dto/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/dto",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/dto/tsconfig.lib.json b/libs/dto/tsconfig.lib.json
+new file mode 100644
+index 0000000..462a5ad
+--- /dev/null
++++ b/libs/dto/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/dto"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/events/package.json b/libs/events/package.json
+new file mode 100644
+index 0000000..da577d2
+--- /dev/null
++++ b/libs/events/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/events",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/events/tsconfig.lib.json b/libs/events/tsconfig.lib.json
+new file mode 100644
+index 0000000..f72dd16
+--- /dev/null
++++ b/libs/events/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/events"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/logger/package.json b/libs/logger/package.json
+new file mode 100644
+index 0000000..27795c1
+--- /dev/null
++++ b/libs/logger/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/logger",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/logger/tsconfig.lib.json b/libs/logger/tsconfig.lib.json
+new file mode 100644
+index 0000000..cd7c5b5
+--- /dev/null
++++ b/libs/logger/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/logger"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/observability/package.json b/libs/observability/package.json
+new file mode 100644
+index 0000000..b8b380e
+--- /dev/null
++++ b/libs/observability/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/observability",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/observability/tsconfig.lib.json b/libs/observability/tsconfig.lib.json
+new file mode 100644
+index 0000000..5350f5a
+--- /dev/null
++++ b/libs/observability/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/observability"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/libs/utils/package.json b/libs/utils/package.json
+new file mode 100644
+index 0000000..625a36f
+--- /dev/null
++++ b/libs/utils/package.json
+@@ -0,0 +1,6 @@
++{
++  "name": "@app/utils",
++  "version": "0.1.0",
++  "private": true,
++  "main": "src/index.ts"
++}
+diff --git a/libs/utils/tsconfig.lib.json b/libs/utils/tsconfig.lib.json
+new file mode 100644
+index 0000000..8c4de11
+--- /dev/null
++++ b/libs/utils/tsconfig.lib.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "declaration": true,
++    "outDir": "../../dist/libs/utils"
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
++}
+diff --git a/nest-cli.json b/nest-cli.json
+new file mode 100644
+index 0000000..a2a4230
+--- /dev/null
++++ b/nest-cli.json
+@@ -0,0 +1,177 @@
++{
++  "$schema": "https://json.schemastore.org/nest-cli",
++  "collection": "@nestjs/schematics",
++  "sourceRoot": "apps/api-gateway/src",
++  "compilerOptions": {
++    "builder": "swc",
++    "typeCheck": true,
++    "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
++    "webpack": false
++  },
++  "monorepo": true,
++  "root": "apps/api-gateway",
++  "projects": {
++    "api-gateway": {
++      "type": "application",
++      "root": "apps/api-gateway",
++      "entryFile": "main",
++      "sourceRoot": "apps/api-gateway/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
++      }
++    },
++    "notification-service": {
++      "type": "application",
++      "root": "apps/notification-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/notification-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
++      }
++    },
++    "email-service": {
++      "type": "application",
++      "root": "apps/email-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/email-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/email-service/tsconfig.app.json"
++      }
++    },
++    "push-service": {
++      "type": "application",
++      "root": "apps/push-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/push-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/push-service/tsconfig.app.json"
++      }
++    },
++    "sms-service": {
++      "type": "application",
++      "root": "apps/sms-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/sms-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/sms-service/tsconfig.app.json"
++      }
++    },
++    "websocket-service": {
++      "type": "application",
++      "root": "apps/websocket-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/websocket-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/websocket-service/tsconfig.app.json"
++      }
++    },
++    "scheduler-service": {
++      "type": "application",
++      "root": "apps/scheduler-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/scheduler-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/scheduler-service/tsconfig.app.json"
++      }
++    },
++    "worker-service": {
++      "type": "application",
++      "root": "apps/worker-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/worker-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/worker-service/tsconfig.app.json"
++      }
++    },
++    "template-service": {
++      "type": "application",
++      "root": "apps/template-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/template-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/template-service/tsconfig.app.json"
++      }
++    },
++    "user-preference-service": {
++      "type": "application",
++      "root": "apps/user-preference-service",
++      "entryFile": "main",
++      "sourceRoot": "apps/user-preference-service/src",
++      "compilerOptions": {
++        "tsConfigPath": "apps/user-preference-service/tsconfig.app.json"
++      }
++    },
++    "config": {
++      "type": "library",
++      "root": "libs/config",
++      "entryFile": "index",
++      "sourceRoot": "libs/config/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/config/tsconfig.lib.json"
++      }
++    },
++    "database": {
++      "type": "library",
++      "root": "libs/database",
++      "entryFile": "index",
++      "sourceRoot": "libs/database/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/database/tsconfig.lib.json"
++      }
++    },
++    "logger": {
++      "type": "library",
++      "root": "libs/logger",
++      "entryFile": "index",
++      "sourceRoot": "libs/logger/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/logger/tsconfig.lib.json"
++      }
++    },
++    "events": {
++      "type": "library",
++      "root": "libs/events",
++      "entryFile": "index",
++      "sourceRoot": "libs/events/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/events/tsconfig.lib.json"
++      }
++    },
++    "dto": {
++      "type": "library",
++      "root": "libs/dto",
++      "entryFile": "index",
++      "sourceRoot": "libs/dto/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/dto/tsconfig.lib.json"
++      }
++    },
++    "utils": {
++      "type": "library",
++      "root": "libs/utils",
++      "entryFile": "index",
++      "sourceRoot": "libs/utils/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/utils/tsconfig.lib.json"
++      }
++    },
++    "common": {
++      "type": "library",
++      "root": "libs/common",
++      "entryFile": "index",
++      "sourceRoot": "libs/common/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/common/tsconfig.lib.json"
++      }
++    },
++    "observability": {
++      "type": "library",
++      "root": "libs/observability",
++      "entryFile": "index",
++      "sourceRoot": "libs/observability/src",
++      "compilerOptions": {
++        "tsConfigPath": "libs/observability/tsconfig.lib.json"
++      }
++    }
++  }
++}
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..e2d6917
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,28 @@
++{
++  "name": "notification-platform",
++  "version": "0.1.0",
++  "private": true,
++  "description": "Production-grade notification platform",
++  "scripts": {
++    "build": "nest build",
++    "format": "prettier --write \"**/*.ts\"",
++    "lint": "eslint \"{apps,libs}/**/*.ts\" --fix",
++    "test": "jest --passWithNoTests",
++    "test:watch": "jest --watch",
++    "test:cov": "jest --coverage",
++    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json",
++    "start:dev": "nest start --watch",
++    "start:api-gateway": "nest start api-gateway --watch",
++    "prisma:generate": "prisma generate",
++    "prisma:push": "prisma db push",
++    "prisma:studio": "prisma studio",
++    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
++    "docker:down": "docker compose -f docker/docker-compose.yml down",
++    "prepare": "husky"
++  },
++  "engines": {
++    "node": ">=24.0.0",
++    "pnpm": ">=11.0.0"
++  },
++  "packageManager": "pnpm@11.5.2"
++}
+diff --git a/pnpm-workspace.yaml b/pnpm-workspace.yaml
+new file mode 100644
+index 0000000..8f80f0c
+--- /dev/null
++++ b/pnpm-workspace.yaml
+@@ -0,0 +1,3 @@
++packages:
++  - 'apps/*'
++  - 'libs/*'
+diff --git a/tsconfig.build.json b/tsconfig.build.json
+new file mode 100644
+index 0000000..fe6ec58
+--- /dev/null
++++ b/tsconfig.build.json
+@@ -0,0 +1,4 @@
++{
++  "extends": "./tsconfig.json",
++  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "**/*test.ts"]
++}
+diff --git a/tsconfig.json b/tsconfig.json
+new file mode 100644
+index 0000000..f8c6f84
+--- /dev/null
++++ b/tsconfig.json
+@@ -0,0 +1,42 @@
++{
++  "compilerOptions": {
++    "module": "commonjs",
++    "declaration": true,
++    "removeComments": true,
++    "emitDecoratorMetadata": true,
++    "experimentalDecorators": true,
++    "allowSyntheticDefaultImports": true,
++    "target": "ES2022",
++    "sourceMap": true,
++    "outDir": "./dist",
++    "baseUrl": "./",
++    "incremental": true,
++    "skipLibCheck": true,
++    "strict": true,
++    "strictNullChecks": true,
++    "noImplicitAny": true,
++    "strictBindCallApply": true,
++    "forceConsistentCasingInFileNames": true,
++    "noFallthroughCasesInSwitch": true,
++    "esModuleInterop": true,
++    "resolveJsonModule": true,
++    "paths": {
++      "@app/config": ["libs/config/src"],
++      "@app/config/*": ["libs/config/src/*"],
++      "@app/database": ["libs/database/src"],
++      "@app/database/*": ["libs/database/src/*"],
++      "@app/logger": ["libs/logger/src"],
++      "@app/logger/*": ["libs/logger/src/*"],
++      "@app/events": ["libs/events/src"],
++      "@app/events/*": ["libs/events/src/*"],
++      "@app/dto": ["libs/dto/src"],
++      "@app/dto/*": ["libs/dto/src/*"],
++      "@app/utils": ["libs/utils/src"],
++      "@app/utils/*": ["libs/utils/src/*"],
++      "@app/common": ["libs/common/src"],
++      "@app/common/*": ["libs/common/src/*"],
++      "@app/observability": ["libs/observability/src"],
++      "@app/observability/*": ["libs/observability/src/*"]
++    }
++  }
++}
