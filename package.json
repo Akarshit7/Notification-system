@@ -1,0 +1,28 @@
+{
+  "name": "notification-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade notification platform",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"**/*.ts\"",
+    "lint": "eslint \"{apps,libs}/**/*.ts\" --fix",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json",
+    "start:dev": "nest start --watch",
+    "start:api-gateway": "nest start api-gateway --watch",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "packageManager": "pnpm@11.5.2"
+}
