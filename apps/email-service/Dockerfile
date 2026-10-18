@@ -6,7 +6,7 @@ COPY apps/email-service/package.json ./apps/email-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build email-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

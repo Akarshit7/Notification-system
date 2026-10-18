@@ -6,7 +6,7 @@ COPY apps/user-preference-service/package.json ./apps/user-preference-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build user-preference-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

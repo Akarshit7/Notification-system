@@ -6,7 +6,7 @@ COPY apps/notification-service/package.json ./apps/notification-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build notification-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

@@ -4,16 +4,8 @@ import { LoggerModule } from '@app/logger';
 import { DatabaseModule } from '@app/database';
 import { EventsModule } from '@app/events';
 import { ObservabilityModule } from '@app/observability';
-import { HealthModule } from './health/health.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    LoggerModule,
-    DatabaseModule,
-    EventsModule,
-    ObservabilityModule,
-    HealthModule,
-  ],
+  imports: [ConfigModule, LoggerModule, DatabaseModule, EventsModule, ObservabilityModule],
 })
 export class AppModule {}

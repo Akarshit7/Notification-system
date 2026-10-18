@@ -6,7 +6,7 @@ COPY apps/sms-service/package.json ./apps/sms-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build sms-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

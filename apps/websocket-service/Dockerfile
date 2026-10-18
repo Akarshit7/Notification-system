@@ -6,7 +6,7 @@ COPY apps/websocket-service/package.json ./apps/websocket-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build websocket-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

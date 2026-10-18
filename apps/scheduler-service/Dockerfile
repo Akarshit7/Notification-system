@@ -6,7 +6,7 @@ COPY apps/scheduler-service/package.json ./apps/scheduler-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build scheduler-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

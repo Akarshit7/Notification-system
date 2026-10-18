@@ -6,7 +6,7 @@ COPY apps/api-gateway/package.json ./apps/api-gateway/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build api-gateway
 
 FROM node:24-alpine AS runner
 WORKDIR /app

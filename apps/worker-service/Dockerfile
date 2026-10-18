@@ -6,7 +6,7 @@ COPY apps/worker-service/package.json ./apps/worker-service/
 COPY libs/ ./libs/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm exec nest build worker-service
 
 FROM node:24-alpine AS runner
 WORKDIR /app

@@ -7,9 +7,10 @@ export class LoggerService implements NestLoggerService {
 
   constructor(options?: LoggerOptions) {
     this.logger = pino({
-      transport: process.env.NODE_ENV !== 'production'
-        ? { target: 'pino-pretty', options: { colorize: true } }
-        : undefined,
+      transport:
+        process.env.NODE_ENV !== 'production'
+          ? { target: 'pino-pretty', options: { colorize: true } }
+          : undefined,
       level: process.env.LOG_LEVEL || 'info',
       ...options,
     });

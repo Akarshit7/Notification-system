@@ -9,4 +9,7 @@ coverage/
 .turbo
 prisma/*.db
 prisma/*.db-journal
+
+# Internal AI-workflow artifacts (not part of the published project)
 .superpowers/
+docs/superpowers/

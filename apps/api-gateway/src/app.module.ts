@@ -8,7 +8,6 @@ import { ObservabilityModule } from '@app/observability';
 import { CommonModule } from '@app/common';
 import { UtilsModule } from '@app/utils';
 import { DtoModule } from '@app/dto';
-import { HealthModule } from './health/health.module';
 import { MetricsController } from './metrics/metrics.controller';
 import { AppController } from './app.controller';
 
@@ -22,7 +21,6 @@ import { AppController } from './app.controller';
     CommonModule,
     UtilsModule,
     DtoModule,
-    HealthModule,
   ],
   controllers: [AppController, MetricsController],
   providers: [
